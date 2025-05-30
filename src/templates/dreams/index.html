@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonhos | Minhas Economias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #b5d56a;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            max-width: 230px;
+            margin-left: 20px;
+        }
+        .user-menu {
+            margin-right: 20px;
+        }
+        .user-menu button {
+            background-color: #8fb83f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .main-nav {
+            background-color: #363636;
+            display: flex;
+        }
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-right: 1px solid #555;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            background-color: #4a4a4a;
+        }
+        .nav-item:hover {
+            background-color: #4a4a4a;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .dreams-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .add-dream {
+            background-color: #f7a600;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+        .dreams-summary {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .summary-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #b5d56a;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .dreams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .dream-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: transform 0.2s ease;
+        }
+        .dream-card:hover {
+            transform: translateY(-5px);
+        }
+        .dream-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .dream-type {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        .dream-info {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .dream-label {
+            color: #555;
+        }
+        .dream-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .dream-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .dream-action {
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+            text-decoration: none;
+        }
+        .action-edit {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .action-delete {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .action-add {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .no-dreams {
+            text-align: center;
+            padding: 50px 0;
+            color: #777;
+            font-size: 18px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #ddd;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .footer-logos a {
+            display: inline-block;
+        }
+        .footer-logos img {
+            height: 30px;
+        }
+        .copyright {
+            color: #999;
+            font-size: 12px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .flash-message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .flash-message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .status-active {
+            color: #2e7d32;
+        }
+        .status-completed {
+            color: #1976d2;
+        }
+        .status-canceled {
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Minhas Economias" width="230">
+                </a>
+            </div>
+            <div class="user-menu">
+                <button>{{ session.get('email') }}</button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item">Início</a>
+            <a href="{{ url_for('transactions.index') }}" class="nav-item">Transações</a>
+            <a href="{{ url_for('dreams.index') }}" class="nav-item active">Sonhos</a>
+            <a href="#" class="nav-item">Orçamento</a>
+            <a href="#" class="nav-item">Análise</a>
+            <a href="#" class="nav-item">Configurações</a>
+        </nav>
+
+        <main class="content">
+            <div class="dreams-container">
+                <div class="section-title">
+                    <h1>Meus Sonhos</h1>
+                    <a href="{{ url_for('dreams.create') }}" class="add-dream">
+                        <span>+</span> Novo Sonho
+                    </a>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="dreams-summary">
+                    <div class="summary-row">
+                        <div class="summary-label">Total de sonhos:</div>
+                        <div class="summary-value">{{ dreams|length }}</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Valor total:</div>
+                        <div class="summary-value">R$ {{ "%.2f"|format(total_target) }}</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Valor acumulado:</div>
+                        <div class="summary-value">R$ {{ "%.2f"|format(total_current) }}</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Progresso geral:</div>
+                        <div class="summary-value">{{ "%.2f"|format(total_progress) }}%</div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ total_progress }}%"></div>
+                    </div>
+                </div>
+
+                {% if dreams %}
+                <div class="dreams-grid">
+                    {% for dream in dreams %}
+                    <div class="dream-card">
+                        <h2 class="dream-title">{{ dream.name }}</h2>
+                        <span class="dream-type">{{ dream.type }}</span>
+                        
+                        <div class="dream-info">
+                            <div class="dream-label">Meta:</div>
+                            <div class="dream-value">R$ {{ "%.2f"|format(dream.target_amount) }}</div>
+                        </div>
+                        <div class="dream-info">
+                            <div class="dream-label">Acumulado:</div>
+                            <div class="dream-value">R$ {{ "%.2f"|format(dream.current_amount) }}</div>
+                        </div>
+                        <div class="dream-info">
+                            <div class="dream-label">Progresso:</div>
+                            <div class="dream-value">{{ "%.2f"|format((dream.current_amount / dream.target_amount) * 100 if dream.target_amount > 0 else 0) }}%</div>
+                        </div>
+                        
+                        {% if dream.target_date %}
+                        <div class="dream-info">
+                            <div class="dream-label">Data alvo:</div>
+                            <div class="dream-value">{{ dream.target_date.strftime('%d/%m/%Y') }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="dream-info">
+                            <div class="dream-label">Status:</div>
+                            <div class="dream-value status-{{ dream.status }}">
+                                {{ dream.status|capitalize }}
+                            </div>
+                        </div>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ (dream.current_amount / dream.target_amount) * 100 if dream.target_amount > 0 else 0 }}%"></div>
+                        </div>
+                        
+                        <div class="dream-actions">
+                            <a href="{{ url_for('dreams.edit', dream_id=dream.id) }}" class="dream-action action-edit">Editar</a>
+                            <form action="{{ url_for('dreams.delete', dream_id=dream.id) }}" method="post" style="display: inline;">
+                                <button type="submit" class="dream-action action-delete" onclick="return confirm('Tem certeza que deseja excluir este sonho?')">Excluir</button>
+                            </form>
+                            <button type="button" class="dream-action action-add" onclick="openAddValueModal({{ dream.id }})">Adicionar</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-dreams">
+                    <p>Você ainda não tem sonhos cadastrados.</p>
+                    <p>Clique em "Novo Sonho" para começar a planejar seus objetivos!</p>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" onclick="return false;">Sobre o Minhas Economias</a>
+                <a href="#" onclick="return false;">Minhas Economias</a>
+                <a href="#" onclick="return false;">Educação Financeira</a>
+                <a href="#" onclick="return false;">Segurança</a>
+                <a href="#" onclick="return false;">Junte-se a nós</a>
+            </div>
+            <div class="footer-logos">
+                <a href="#"><img src="{{ url_for('static', filename='img/comodo.png') }}" alt="Comodo"></a>
+                <a href="#"><img src="{{ url_for('static', filename='img/auspex.png') }}" alt="Auspex"></a>
+            </div>
+            <div class="copyright">
+                Minhas Economias © 2014 - Todos os direitos reservados.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal para adicionar valor (será implementado com JavaScript) -->
+    <div id="addValueModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; width: 300px;">
+            <h3 style="margin-bottom: 15px;">Adicionar Valor</h3>
+            <form id="addValueForm" action="" method="post">
+                <div style="margin-bottom: 15px;">
+                    <label for="amount" style="display: block; margin-bottom: 5px;">Valor (R$):</label>
+                    <input type="number" id="amount" name="amount" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" required>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="button" onclick="closeAddValueModal()" style="padding: 8px 15px; background-color: #f0f0f0; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    <button type="submit" style="padding: 8px 15px; background-color: #b5d56a; color: white; border: none; border-radius: 4px; cursor: pointer;">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAddValueModal(dreamId) {
+            document.getElementById('addValueModal').style.display = 'block';
+            document.getElementById('addValueForm').action = '/dreams/' + dreamId + '/update_amount';
+        }
+        
+        function closeAddValueModal() {
+            document.getElementById('addValueModal').style.display = 'none';
+        }
+        
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            var modal = document.getElementById('addValueModal');
+            if (event.target == modal) {
+                closeAddValueModal();
+            }
+        }
+    </script>
+</body>
+</html>

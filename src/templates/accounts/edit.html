@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Conta | Minhas Economias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #b5d56a;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            max-width: 230px;
+            margin-left: 20px;
+        }
+        .user-menu {
+            margin-right: 20px;
+        }
+        .user-menu button {
+            background-color: #8fb83f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .main-nav {
+            background-color: #363636;
+            display: flex;
+        }
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-right: 1px solid #555;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            background-color: #4a4a4a;
+        }
+        .nav-item:hover {
+            background-color: #4a4a4a;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .form-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #f7a600;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #ddd;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .footer-logos a {
+            display: inline-block;
+        }
+        .footer-logos img {
+            height: 30px;
+        }
+        .copyright {
+            color: #999;
+            font-size: 12px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .flash-message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .flash-message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Minhas Economias" width="230">
+                </a>
+            </div>
+            <div class="user-menu">
+                <button>{{ session.get('email') }}</button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item">Início</a>
+            <a href="#" class="nav-item">Transações</a>
+            <a href="#" class="nav-item">Sonhos</a>
+            <a href="#" class="nav-item">Orçamento</a>
+            <a href="#" class="nav-item">Análise</a>
+            <a href="#" class="nav-item">Configurações</a>
+        </nav>
+
+        <main class="content">
+            <div class="form-container">
+                <h1 class="form-title">Editar Conta</h1>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form action="{{ url_for('accounts.edit', account_id=account.id) }}" method="post">
+                    <div class="form-group">
+                        <label for="name">Nome da Conta</label>
+                        <input type="text" id="name" name="name" class="form-control" value="{{ account.name }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="type">Tipo de Conta</label>
+                        <select id="type" name="type" class="form-select" required>
+                            <option value="">Selecione um tipo</option>
+                            <option value="carteira" {% if account.type == 'carteira' %}selected{% endif %}>Carteira</option>
+                            <option value="cartao_credito" {% if account.type == 'cartao_credito' %}selected{% endif %}>Cartão de Crédito</option>
+                            <option value="conta_corrente" {% if account.type == 'conta_corrente' %}selected{% endif %}>Conta Corrente</option>
+                            <option value="poupanca" {% if account.type == 'poupanca' %}selected{% endif %}>Poupança</option>
+                        </select>
+                    </div>
+                    
+                    <div class="btn-container">
+                        <div>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                        <form action="{{ url_for('accounts.delete', account_id=account.id) }}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta conta?')">Excluir</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" onclick="return false;">Sobre o Minhas Economias</a>
+                <a href="#" onclick="return false;">Minhas Economias</a>
+                <a href="#" onclick="return false;">Educação Financeira</a>
+                <a href="#" onclick="return false;">Segurança</a>
+                <a href="#" onclick="return false;">Junte-se a nós</a>
+            </div>
+            <div class="footer-logos">
+                <a href="#"><img src="{{ url_for('static', filename='img/comodo.png') }}" alt="Comodo"></a>
+                <a href="#"><img src="{{ url_for('static', filename='img/auspex.png') }}" alt="Auspex"></a>
+            </div>
+            <div class="copyright">
+                Minhas Economias © 2014 - Todos os direitos reservados.
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

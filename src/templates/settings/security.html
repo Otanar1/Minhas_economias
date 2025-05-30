@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segurança | Minhas Economias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #b5d56a;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            max-width: 230px;
+            margin-left: 20px;
+        }
+        .user-menu {
+            margin-right: 20px;
+        }
+        .user-menu button {
+            background-color: #8fb83f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .main-nav {
+            background-color: #363636;
+            display: flex;
+        }
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-right: 1px solid #555;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            background-color: #4a4a4a;
+        }
+        .nav-item:hover {
+            background-color: #4a4a4a;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+        }
+        .settings-sidebar {
+            width: 250px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-right: 20px;
+        }
+        .settings-menu {
+            list-style: none;
+        }
+        .settings-menu-item {
+            margin-bottom: 10px;
+        }
+        .settings-menu-link {
+            display: block;
+            padding: 10px;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .settings-menu-link:hover {
+            background-color: #f0f0f0;
+        }
+        .settings-menu-link.active {
+            background-color: #b5d56a;
+            color: white;
+        }
+        .settings-content {
+            flex: 1;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .settings-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #b5d56a;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #ddd;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .footer-logos a {
+            display: inline-block;
+        }
+        .footer-logos img {
+            height: 30px;
+        }
+        .copyright {
+            color: #999;
+            font-size: 12px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .flash-message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .flash-message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .security-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #b5d56a;
+        }
+        .security-info p {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .security-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Minhas Economias" width="230">
+                </a>
+            </div>
+            <div class="user-menu">
+                <button>{{ session.get('email') }}</button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item">Início</a>
+            <a href="{{ url_for('transactions.index') }}" class="nav-item">Transações</a>
+            <a href="{{ url_for('dreams.index') }}" class="nav-item">Sonhos</a>
+            <a href="{{ url_for('budgets.index') }}" class="nav-item">Orçamento</a>
+            <a href="{{ url_for('analysis.index') }}" class="nav-item">Análise</a>
+            <a href="{{ url_for('settings.index') }}" class="nav-item active">Configurações</a>
+        </nav>
+
+        <main class="content">
+            <aside class="settings-sidebar">
+                <ul class="settings-menu">
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.index') }}" class="settings-menu-link">Visão Geral</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.profile') }}" class="settings-menu-link">Perfil</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.security') }}" class="settings-menu-link active">Segurança</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.preferences') }}" class="settings-menu-link">Preferências</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.categories') }}" class="settings-menu-link">Categorias</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.export') }}" class="settings-menu-link">Exportar Dados</a>
+                    </li>
+                    <li class="settings-menu-item">
+                        <a href="{{ url_for('settings.delete_account') }}" class="settings-menu-link">Excluir Conta</a>
+                    </li>
+                </ul>
+            </aside>
+
+            <div class="settings-content">
+                <h1 class="settings-title">Segurança da Conta</h1>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="security-info">
+                    <p><strong>Dicas de segurança:</strong></p>
+                    <p>• Use uma senha forte com pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.</p>
+                    <p>• Não use a mesma senha em vários sites.</p>
+                    <p>• Altere sua senha regularmente para maior segurança.</p>
+                    <p>• Nunca compartilhe sua senha com ninguém.</p>
+                </div>
+
+                <form action="{{ url_for('settings.security') }}" method="post">
+                    <div class="form-group">
+                        <label for="current_password">Senha Atual</label>
+                        <input type="password" id="current_password" name="current_password" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new_password">Nova Senha</label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm_password">Confirmar Nova Senha</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+                    
+                    <div class="btn-container">
+                        <a href="{{ url_for('settings.index') }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" onclick="return false;">Sobre o Minhas Economias</a>
+                <a href="#" onclick="return false;">Minhas Economias</a>
+                <a href="#" onclick="return false;">Educação Financeira</a>
+                <a href="#" onclick="return false;">Segurança</a>
+                <a href="#" onclick="return false;">Junte-se a nós</a>
+            </div>
+            <div class="footer-logos">
+                <a href="#"><img src="{{ url_for('static', filename='img/comodo.png') }}" alt="Comodo"></a>
+                <a href="#"><img src="{{ url_for('static', filename='img/auspex.png') }}" alt="Auspex"></a>
+            </div>
+            <div class="copyright">
+                Minhas Economias © 2014 - Todos os direitos reservados.
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

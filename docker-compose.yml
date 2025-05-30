@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Serviço do MySQL
+  db:
+    image: mysql:8.0
+    container_name: minhas_economias_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: minhas_economias
+      MYSQL_USER: minhas_economias_user
+      MYSQL_PASSWORD: senha_segura
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  # Serviço da aplicação Flask
+  web:
+    build: .
+    container_name: minhas_economias_web
+    restart: always
+    depends_on:
+      - db
+    environment:
+      MYSQL_USER: minhas_economias_user
+      MYSQL_PASSWORD: senha_segura
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_DB: minhas_economias
+      FLASK_APP: src/main.py
+      FLASK_ENV: development
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
