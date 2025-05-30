@@ -264,7 +264,12 @@ def index():
         if 'user_id' not in session:
             return redirect(url_for('auth.login'))
         
-        user_id = session['user_id']
+        user_id = session["user_id"] # Corrigido: Indentação ajustada
+        user = db.session.get(User, user_id) # Corrigido: Indentação ajustada
+        if not user:
+            logger.error(f"Usuário com ID {user_id} não encontrado no banco de dados.")
+            session.clear()
+            return redirect(url_for("auth.login"))
         
         # Otimização: Consultas separadas para melhorar performance
         accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id, active=True)).scalars().all()
@@ -280,10 +285,11 @@ def index():
             .limit(5)
         ).scalars().all()
         
-        return render_template('dashboard/index.html', 
+        return render_template("dashboard/index.html", 
+                            user=user, # Passar o objeto user para o template
                             accounts=accounts, 
                             total_balance=total_balance,
-                            recent_transactions=recent_transactions)
+                            recent_transactions=recent_transactions) # Corrigido: Removido 's)' extra
     except Exception as e:
         logger.error(f"Erro no dashboard: {str(e)}")
         flash('Ocorreu um erro ao carregar o dashboard. Por favor, tente novamente.', 'error')
