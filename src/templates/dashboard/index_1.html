@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Economias - Economize mais. Viva melhor.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #b5d56a;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            max-width: 230px;
+            margin-left: 20px;
+        }
+        .user-menu {
+            margin-right: 20px;
+        }
+        .user-menu button {
+            background-color: #8fb83f;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .main-nav {
+            background-color: #363636;
+            display: flex;
+        }
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-right: 1px solid #555;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            background-color: #4a4a4a;
+        }
+        .nav-item:hover {
+            background-color: #4a4a4a;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-right: 20px;
+        }
+        .main-content {
+            flex: 1;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .account-list {
+            list-style: none;
+        }
+        .account-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .account-name {
+            display: flex;
+            align-items: center;
+        }
+        .account-checkbox {
+            margin-right: 8px;
+        }
+        .account-balance {
+            font-weight: bold;
+        }
+        .total-balance {
+            padding: 10px 0;
+            border-top: 2px solid #ddd;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .total-label {
+            font-weight: bold;
+        }
+        .total-value {
+            font-weight: bold;
+        }
+        .action-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #b5d56a;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .transactions-section {
+            margin-bottom: 20px;
+        }
+        .date-selector {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .date-selector select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-right: 10px;
+        }
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .date-nav button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .add-transaction {
+            background-color: #f7a600;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .transaction-table th {
+            text-align: left;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+        .transaction-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .no-transactions {
+            text-align: center;
+            padding: 20px;
+            color: #e74c3c;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #ddd;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .footer-logos a {
+            display: inline-block;
+        }
+        .footer-logos img {
+            height: 30px;
+        }
+        .copyright {
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <a href="/">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Minhas Economias" width="230">
+                </a>
+            </div>
+            <div class="user-menu">
+                <button>{{ user.email }}</button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item active">Início</a>
+            <a href="#" class="nav-item">Transações</a>
+            <a href="#" class="nav-item">Sonhos</a>
+            <a href="#" class="nav-item">Orçamento</a>
+            <a href="#" class="nav-item">Análise</a>
+            <a href="#" class="nav-item">Configurações</a>
+        </nav>
+
+        <main class="content">
+            <aside class="sidebar">
+                <div class="section-title">
+                    Contas
+                    <span>
+                        <button class="btn btn-secondary" title="Expandir/Colapsar">+/-</button>
+                    </span>
+                </div>
+                <ul class="account-list">
+                    <li class="account-item">
+                        <div class="account-name">
+                            <input type="checkbox" class="account-checkbox" checked>
+                            <span>Carteira</span>
+                        </div>
+                        <div class="account-balance">R$ 0,00</div>
+                    </li>
+                    <li class="account-item">
+                        <div class="account-name">
+                            <input type="checkbox" class="account-checkbox" checked>
+                            <span>Cartão de Crédito</span>
+                        </div>
+                        <div class="account-balance">R$ 0,00</div>
+                    </li>
+                    <li class="account-item">
+                        <div class="account-name">
+                            <input type="checkbox" class="account-checkbox" checked>
+                            <span>Conta Corrente</span>
+                        </div>
+                        <div class="account-balance">R$ 0,00</div>
+                    </li>
+                    <li class="account-item">
+                        <div class="account-name">
+                            <input type="checkbox" class="account-checkbox" checked>
+                            <span>Poupança</span>
+                        </div>
+                        <div class="account-balance">R$ 0,00</div>
+                    </li>
+                </ul>
+                <div class="total-balance">
+                    <div class="total-label">Saldo atual</div>
+                    <div class="total-value">R$ 0,00</div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary">Limpar</button>
+                    <button class="btn btn-primary">Nova conta</button>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">
+                    Convites
+                    <span>
+                        <button class="btn btn-secondary" title="Expandir/Colapsar">+/-</button>
+                    </span>
+                </div>
+                <div>
+                    <input type="text" placeholder="Convide um amigo" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+                    <button class="btn btn-primary" style="width: 100%;">Enviar convite</button>
+                </div>
+            </aside>
+
+            <div class="main-content">
+                <div class="transactions-section">
+                    <div class="section-title">
+                        <div class="date-selector">
+                            <select>
+                                <option>Maio/2025</option>
+                                <option>Abril/2025</option>
+                                <option>Março/2025</option>
+                            </select>
+                            <div class="date-nav">
+                                <button>&lt;</button>
+                                <button>&gt;</button>
+                            </div>
+                        </div>
+                        <button class="add-transaction">
+                            <span>+</span> Adicionar transação
+                        </button>
+                    </div>
+
+                    <h3>Entradas e saídas</h3>
+                    <div style="margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <div>Saldo anterior</div>
+                            <div>R$ 0,00</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <div>Entradas</div>
+                            <div>R$ 0,00</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <div>Saídas</div>
+                            <div>R$ 0,00</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; font-size: 18px;">
+                            <div>R$ 0,00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-title">
+                        Anteriores não consolidadas
+                    </div>
+                    <div class="no-transactions">
+                        Nenhuma transação encontrada
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-title">
+                        Próximas não consolidadas
+                    </div>
+                    <div class="no-transactions">
+                        Nenhuma transação encontrada
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-title">
+                        Próximas com alerta
+                    </div>
+                    <div class="no-transactions">
+                        Nenhuma transação encontrada
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-title">
+                        Saldo das contas
+                    </div>
+                    <div style="height: 200px; background-color: #f9f9f9; display: flex; justify-content: center; align-items: center;">
+                        <div>Gráfico de saldo das contas</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" onclick="return false;">Sobre o Minhas Economias</a>
+                <a href="#" onclick="return false;">Minhas Economias</a>
+                <a href="#" onclick="return false;">Educação Financeira</a>
+                <a href="#" onclick="return false;">Segurança</a>
+                <a href="#" onclick="return false;">Junte-se a nós</a>
+            </div>
+            <div class="footer-logos">
+                <a href="#"><img src="{{ url_for('static', filename='img/comodo.png') }}" alt="Comodo"></a>
+                <a href="#"><img src="{{ url_for('static', filename='img/auspex.png') }}" alt="Auspex"></a>
+            </div>
+            <div class="copyright">
+                Minhas Economias © 2014 - Todos os direitos reservados.
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
