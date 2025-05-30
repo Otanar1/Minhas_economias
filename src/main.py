@@ -6,10 +6,23 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import logging
+import locale
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configurar locale para formatação de moeda brasileira
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except locale.Error:
+    logger.warning("Locale pt_BR.UTF-8 não disponível. Usando locale padrão.")
+    # Tentar um fallback ou usar formatação manual
+    def format_currency(value):
+        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+else:
+    def format_currency(value):
+        return locale.currency(value, grouping=True, symbol=True)
 
 # Inicialização do app Flask
 app = Flask(__name__)
@@ -23,7 +36,7 @@ else:
     # Configuração para MySQL local (desenvolvimento)
     mysql_user = os.environ.get('MYSQL_USER', 'root')
     mysql_password = os.environ.get('MYSQL_PASSWORD', 'password')
-    mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
+    mysql_host = os.environ.get('MYSQL_HOST', 'db') # Alterado para 'db' (nome do serviço no docker-compose)
     mysql_port = os.environ.get('MYSQL_PORT', '3306')
     mysql_db = os.environ.get('MYSQL_DB', 'minhas_economias')
     
@@ -40,7 +53,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 # Inicialização do banco de dados
 db = SQLAlchemy(app)
 
-# Definição dos modelos
+# Definição dos modelos (mantidos como antes)
 class User(db.Model):
     __tablename__ = 'users'
     
@@ -132,7 +145,7 @@ class Budget(db.Model):
     year = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-# Definição das rotas de autenticação
+# Definição das rotas de autenticação (mantidas como antes)
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -264,8 +277,8 @@ def index():
         if 'user_id' not in session:
             return redirect(url_for('auth.login'))
         
-        user_id = session["user_id"] # Corrigido: Indentação ajustada
-        user = db.session.get(User, user_id) # Corrigido: Indentação ajustada
+        user_id = session["user_id"]
+        user = db.session.get(User, user_id)
         if not user:
             logger.error(f"Usuário com ID {user_id} não encontrado no banco de dados.")
             session.clear()
@@ -284,12 +297,32 @@ def index():
             .order_by(Transaction.date.desc())
             .limit(5)
         ).scalars().all()
+
+        # *** NOVO: Formatar dados para o template ***
+        accounts_formatted = [
+            {
+                'name': acc.name,
+                'balance_formatted': format_currency(acc.balance)
+            }
+            for acc in accounts
+        ]
+        total_balance_formatted = format_currency(total_balance)
+        recent_transactions_formatted = [
+            {
+                'date_formatted': tx.date.strftime('%d/%m/%Y'),
+                'description': tx.description,
+                'category_name': tx.category.name if tx.category else 'Sem Categoria',
+                'amount_formatted': format_currency(tx.amount)
+            }
+            for tx in recent_transactions
+        ]
+        # *** FIM NOVO ***
         
         return render_template("dashboard/index.html", 
-                            user=user, # Passar o objeto user para o template
-                            accounts=accounts, 
-                            total_balance=total_balance,
-                            recent_transactions=recent_transactions) # Corrigido: Removido 's)' extra
+                            user=user, 
+                            accounts_formatted=accounts_formatted, # Passar contas formatadas
+                            total_balance_formatted=total_balance_formatted, # Passar saldo total formatado
+                            recent_transactions_formatted=recent_transactions_formatted) # Passar transações formatadas
     except Exception as e:
         logger.error(f"Erro no dashboard: {str(e)}")
         flash('Ocorreu um erro ao carregar o dashboard. Por favor, tente novamente.', 'error')
@@ -301,12 +334,12 @@ app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 
 # Rota raiz
 @app.route('/')
-def index():
+def index_root(): # Renomeado para evitar conflito com dashboard.index
     if 'user_id' in session:
         return redirect(url_for('dashboard.index'))
     return redirect(url_for('auth.login'))
 
-# Função para criar tabelas e dados iniciais
+# Função para criar tabelas e dados iniciais (mantida como antes)
 def setup_database():
     try:
         with app.app_context():
@@ -350,16 +383,16 @@ def setup_database():
                 ]
                 db.session.bulk_save_objects(accounts)
                 db.session.commit()
-                
-                logger.info("Banco de dados inicializado com sucesso!")
+                logger.info("Banco de dados inicializado com usuário, categorias e contas padrão.")
+            else:
+                logger.info("Banco de dados já inicializado anteriormente.")
     except Exception as e:
-        logger.error(f"Erro na inicialização do banco de dados: {str(e)}")
-        raise
+        logger.error(f"Erro ao inicializar o banco de dados: {str(e)}")
+        # Não relançar o erro aqui para permitir que a aplicação continue tentando
 
-# Executar setup do banco de dados
-setup_database()
-
-# Iniciar o servidor Flask
+# Execução principal
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    # Tentar configurar o banco de dados na inicialização
+    # setup_database() # Comentado para evitar bloqueio se o DB não estiver pronto
+    app.run(host='0.0.0.0', port=5000, debug=False) # Debug=False é mais seguro
+
