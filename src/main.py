@@ -31,12 +31,15 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_pre_ping': True,
-    'pool_recycle': 60,
-    'pool_size': 10,
-    'max_overflow': 20
-}
+
+# Adiciona opções de engine apenas se não estiver usando SQLite (para compatibilidade com testes)
+if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 60,
+        'pool_size': 10,
+        'max_overflow': 20
+    }
 
 # Inicialização do banco de dados
 db = SQLAlchemy(app)
