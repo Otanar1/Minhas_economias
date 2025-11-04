@@ -6,23 +6,11 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import logging
-import locale
+from .utils import format_currency
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Configurar locale para formatação de moeda brasileira
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except locale.Error:
-    logger.warning("Locale pt_BR.UTF-8 não disponível. Usando locale padrão.")
-    # Tentar um fallback ou usar formatação manual
-    def format_currency(value):
-        return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-else:
-    def format_currency(value):
-        return locale.currency(value, grouping=True, symbol=True)
 
 # Inicialização do app Flask
 app = Flask(__name__)

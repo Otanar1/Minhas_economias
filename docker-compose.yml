@@ -39,6 +39,7 @@ services:
       - .:/app
     networks:
       - app_network
+    entrypoint: ["/app/entrypoint.sh"]
 
 networks:
   app_network:
