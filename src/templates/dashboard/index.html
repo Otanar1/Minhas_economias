@@ -228,8 +228,7 @@
         <nav class="main-nav">
             {# Corrigido: Removido escapes e aspas extras de url_for #}
             <a href="{{ url_for('dashboard.index') }}" class="nav-item active">Início</a>
-            {# Links temporários - Corrigir hrefs quando as rotas estiverem prontas #}
-            <a href="#" class="nav-item">Transações</a>
+            <a href="{{ url_for('transactions.list_transactions') }}" class="nav-item">Transações</a>
             <a href="#" class="nav-item">Sonhos</a>
             <a href="#" class="nav-item">Orçamento</a>
             <a href="#" class="nav-item">Análise</a>
@@ -297,9 +296,9 @@
                                 <button>&gt;</button>
                             </div>
                         </div>
-                        <button class="add-transaction">
+                        <a href="{{ url_for('transactions.add_transaction') }}" class="add-transaction">
                             <span>+</span> Adicionar transação
-                        </button>
+                        </a>
                     </div>
 
                     <h3>Entradas e saídas</h3>

@@ -320,8 +320,10 @@ def index():
         return redirect(url_for('auth.login'))
 
 # Registrar blueprints
+from src.routes.transactions import transactions_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+app.register_blueprint(transactions_bp, url_prefix='/transactions')
 
 # Rota raiz
 @app.route('/')
