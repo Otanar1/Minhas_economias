@@ -150,3 +150,44 @@ def test_delete_transaction(logged_in_client):
         # O saldo da conta foi restaurado?
         updated_account = db.session.get(Account, account_id)
         assert updated_account.balance == initial_balance
+
+def test_edit_transaction(logged_in_client):
+    """
+    Testa a edição de uma transação.
+    Verifica se o saldo da conta é recalculado corretamente.
+    """
+    client, user_id, account_id, category_id = logged_in_client
+
+    # 1. Criar uma transação inicial
+    with app.app_context():
+        initial_balance = db.session.get(Account, account_id).balance
+        transaction = Transaction(
+            user_id=user_id, account_id=account_id, category_id=category_id,
+            description='Compra inicial', amount=50.00, type='saída', date=date(2025, 2, 1)
+        )
+        account = db.session.get(Account, account_id)
+        account.balance -= 50.00
+        db.session.add(transaction)
+        db.session.commit()
+        transaction_id = transaction.id
+
+    # 2. Editar a transação (mudar o valor de 50 para 75)
+    response = client.post(f'/transactions/edit/{transaction_id}', data={
+        'type': 'saída',
+        'description': 'Compra corrigida',
+        'amount': '75.00',
+        'date': '2025-02-01',
+        'account_id': account_id,
+        'category_id': category_id
+    })
+    assert response.status_code == 302
+
+    # 3. Verificar o resultado
+    with app.app_context():
+        edited_transaction = db.session.get(Transaction, transaction_id)
+        assert edited_transaction.description == 'Compra corrigida'
+        assert edited_transaction.amount == 75.00
+
+        # O saldo deve ser o inicial menos o novo valor da transação
+        updated_account = db.session.get(Account, account_id)
+        assert updated_account.balance == initial_balance - 75.00

@@ -34,6 +34,7 @@
                     <td>{{ transaction.account.name }}</td>
                     <td>{{ transaction.category.name if transaction.category else 'N/A' }}</td>
                     <td>
+                        <a href="{{ url_for('transactions.edit_transaction', transaction_id=transaction.id) }}">Editar</a>
                         <form action="{{ url_for('transactions.delete_transaction', transaction_id=transaction.id) }}" method="POST" style="display:inline;">
                             <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta transação?');">Excluir</button>
                         </form>

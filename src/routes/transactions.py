@@ -129,3 +129,56 @@ def delete_transaction(transaction_id):
         db.session.rollback()
 
     return redirect(url_for('transactions.list_transactions'))
+
+@transactions_bp.route('/edit/<int:transaction_id>', methods=['GET', 'POST'])
+def edit_transaction(transaction_id):
+    if 'user_id' not in session:
+        flash('Acesso não autorizado.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user_id = session['user_id']
+    transaction = db.session.get(Transaction, transaction_id)
+
+    if not transaction or transaction.user_id != user_id:
+        flash('Transação não encontrada ou acesso não autorizado.', 'error')
+        return redirect(url_for('transactions.list_transactions'))
+
+    if request.method == 'POST':
+        try:
+            # 1. Reverter o efeito da transação original
+            original_account = transaction.account
+            if transaction.type == 'saída':
+                original_account.balance += transaction.amount
+            elif transaction.type == 'entrada':
+                original_account.balance -= transaction.amount
+
+            # 2. Coletar novos dados do formulário
+            transaction.type = request.form.get('type')
+            transaction.description = request.form.get('description')
+            transaction.amount = float(request.form.get('amount'))
+            transaction.date = datetime.datetime.strptime(request.form.get('date'), '%Y-%m-%d').date()
+            transaction.account_id = int(request.form.get('account_id'))
+            transaction.category_id = int(request.form.get('category_id'))
+
+            # 3. Aplicar o novo efeito da transação
+            new_account = db.session.get(Account, transaction.account_id)
+            if transaction.type == 'saída':
+                new_account.balance -= transaction.amount
+            elif transaction.type == 'entrada':
+                new_account.balance += transaction.amount
+
+            # 4. Salvar as alterações
+            db.session.commit()
+            flash('Transação atualizada com sucesso!', 'success')
+            return redirect(url_for('transactions.list_transactions'))
+
+        except Exception as e:
+            flash(f'Ocorreu um erro ao atualizar a transação: {e}', 'error')
+            db.session.rollback()
+            return redirect(url_for('transactions.edit_transaction', transaction_id=transaction_id))
+
+    # Para a requisição GET, buscamos os dados para popular o formulário.
+    accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id, active=True)).scalars().all()
+    categories = db.session.execute(db.select(Category).filter_by(user_id=user_id)).scalars().all()
+
+    return render_template('transactions/edit_transaction.html', transaction=transaction, accounts=accounts, categories=categories)
