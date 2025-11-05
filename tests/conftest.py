@@ -28,3 +28,31 @@ def test_client():
             db.session.remove()
             # Limpa o banco de dados novamente
             db.drop_all()
+
+@pytest.fixture
+def logged_in_client(test_client):
+    """
+    Cria e autentica um usuário, retornando o cliente e os IDs dos dados criados.
+    """
+    from src.main import User, Account, Category
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        user = User(name='Test User', email='test@example.com', password=generate_password_hash('password123'))
+        db.session.add(user)
+        db.session.commit()
+
+        account = Account(name='Test Account', balance=1000.0, user_id=user.id, type='conta_corrente')
+        db.session.add(account)
+
+        category = Category(name='Test Category', type='saída', user_id=user.id)
+        db.session.add(category)
+        db.session.commit()
+
+        user_id = user.id
+        account_id = account.id
+        category_id = category.id
+
+    test_client.post('/auth/login', data={'email': 'test@example.com', 'password': 'password123'}, follow_redirects=True)
+
+    return test_client, user_id, account_id, category_id

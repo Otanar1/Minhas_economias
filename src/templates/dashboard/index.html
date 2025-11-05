@@ -354,10 +354,10 @@
 
                 <div class="transactions-section">
                     <div class="section-title">
-                        Saldo das contas
+                        Despesas por Categoria (Mês Atual)
                     </div>
-                    <div style="height: 200px; background-color: #f9f9f9; display: flex; justify-content: center; align-items: center;">
-                        <div>Gráfico de saldo das contas (Implementar)</div>
+                    <div>
+                        <canvas id="expenseChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -367,6 +367,56 @@
             {# ... (conteúdo do footer) ... #}
         </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/summary')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('expenseChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Despesas por Categoria',
+                                data: data.data,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.8)',
+                                    'rgba(54, 162, 235, 0.8)',
+                                    'rgba(255, 206, 86, 0.8)',
+                                    'rgba(75, 192, 192, 0.8)',
+                                    'rgba(153, 102, 255, 0.8)',
+                                    'rgba(255, 159, 64, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Distribuição de Despesas'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar dados para o gráfico:', error));
+        });
+    </script>
 </body>
 </html>
 

@@ -321,9 +321,11 @@ def index():
 
 # Registrar blueprints
 from src.routes.transactions import transactions_bp
+from src.routes.api import api_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(transactions_bp, url_prefix='/transactions')
+app.register_blueprint(api_bp, url_prefix='/api')
 
 # Rota raiz
 @app.route('/')

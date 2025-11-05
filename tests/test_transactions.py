@@ -3,34 +3,6 @@ from src.main import app, db, User, Account, Category, Transaction
 from datetime import date
 from werkzeug.security import generate_password_hash
 
-@pytest.fixture
-def logged_in_client(test_client):
-    """
-    Usa a fixture 'test_client' do conftest.py para obter um cliente limpo
-    e depois cria os dados necessários e faz o login.
-    """
-    with app.app_context():
-        # 1. Criar dados com senha hasheada
-        user = User(name='Test User', email='test@example.com', password=generate_password_hash('password123'))
-        db.session.add(user)
-        db.session.commit()
-
-        account = Account(name='Test Account', balance=1000.0, user_id=user.id, type='conta_corrente')
-        db.session.add(account)
-
-        category = Category(name='Test Category', type='saída', user_id=user.id)
-        db.session.add(category)
-        db.session.commit()
-
-        user_id = user.id
-        account_id = account.id
-        category_id = category.id
-
-    # 2. Fazer login
-    test_client.post('/auth/login', data={'email': 'test@example.com', 'password': 'password123'}, follow_redirects=True)
-
-    # 3. Retornar dados
-    return test_client, user_id, account_id, category_id
 
 def test_add_expense_transaction(logged_in_client):
     """
