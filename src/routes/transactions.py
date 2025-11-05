@@ -93,3 +93,39 @@ def list_transactions():
     ).scalars().all()
     
     return render_template('transactions/list_transactions.html', transactions=transactions)
+
+@transactions_bp.route('/delete/<int:transaction_id>', methods=['POST'])
+def delete_transaction(transaction_id):
+    if 'user_id' not in session:
+        flash('Acesso não autorizado.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user_id = session['user_id']
+
+    try:
+        # 1. Buscar a transação
+        transaction = db.session.get(Transaction, transaction_id)
+
+        # 2. Verificar se a transação existe e pertence ao usuário
+        if not transaction or transaction.user_id != user_id:
+            flash('Transação não encontrada ou acesso não autorizado.', 'error')
+            return redirect(url_for('transactions.list_transactions'))
+
+        # 3. Reverter a alteração no saldo da conta
+        account = transaction.account
+        if transaction.type == 'saída':
+            account.balance += transaction.amount
+        elif transaction.type == 'entrada':
+            account.balance -= transaction.amount
+
+        # 4. Excluir a transação
+        db.session.delete(transaction)
+        db.session.commit()
+
+        flash('Transação excluída com sucesso!', 'success')
+
+    except Exception as e:
+        flash(f'Ocorreu um erro ao excluir a transação: {e}', 'error')
+        db.session.rollback()
+
+    return redirect(url_for('transactions.list_transactions'))

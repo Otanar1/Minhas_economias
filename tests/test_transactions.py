@@ -109,3 +109,44 @@ def test_list_transactions(logged_in_client):
     assert b"Minhas Transa\xc3\xa7\xc3\xb5es" in response.data
     assert b"Almo\xc3\xa7o" in response.data
     assert b"Freela" in response.data
+
+def test_delete_transaction(logged_in_client):
+    """
+    Testa a exclusão de uma transação.
+    Verifica se a transação é removida e o saldo da conta é restaurado.
+    """
+    client, user_id, account_id, category_id = logged_in_client
+
+    # 1. Criar uma transação para ser excluída
+    with app.app_context():
+        initial_balance = db.session.get(Account, account_id).balance
+        transaction_to_delete = Transaction(
+            user_id=user_id,
+            account_id=account_id,
+            category_id=category_id,
+            description='Gasto para excluir',
+            amount=150.00,
+            type='saída',
+            date=date(2025, 1, 20)
+        )
+        # Atualizar o saldo da conta manualmente para o teste
+        account = db.session.get(Account, account_id)
+        account.balance -= 150.00
+        db.session.add(transaction_to_delete)
+        db.session.commit()
+        transaction_id = transaction_to_delete.id
+        balance_before_delete = account.balance
+
+    # 2. Enviar requisição para excluir a transação
+    response = client.post(f'/transactions/delete/{transaction_id}')
+    assert response.status_code == 302 # Verifica o redirecionamento
+
+    # 3. Verificar o resultado
+    with app.app_context():
+        # A transação foi removida?
+        deleted_transaction = db.session.get(Transaction, transaction_id)
+        assert deleted_transaction is None
+
+        # O saldo da conta foi restaurado?
+        updated_account = db.session.get(Account, account_id)
+        assert updated_account.balance == initial_balance
