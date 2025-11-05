@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Sonho</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Adicionar Novo Sonho</h1>
+
+        <form method="POST" action="{{ url_for('dreams.add_dream') }}">
+            <div class="form-group">
+                <label for="name">Nome do Sonho</label>
+                <input type="text" name="name" id="name" placeholder="Ex: Viagem para a Europa" required>
+            </div>
+            <div class="form-group">
+                <label for="target_amount">Meta de Valor</label>
+                <input type="number" name="target_amount" id="target_amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label for="target_date">Data Alvo (Opcional)</label>
+                <input type="date" name="target_date" id="target_date">
+            </div>
+            <div class="form-group">
+                <button type="submit">Adicionar Sonho</button>
+            </div>
+        </form>
+        <a href="{{ url_for('dreams.list_dreams') }}">Cancelar</a>
+    </div>
+</body>
+</html>
