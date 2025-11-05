@@ -354,6 +354,15 @@
 
                 <div class="transactions-section">
                     <div class="section-title">
+                        Progresso do Orçamento (Mês Atual)
+                    </div>
+                    <div id="budgetProgress">
+                        <!-- As barras de progresso serão inseridas aqui pelo JavaScript -->
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-title">
                         Despesas por Categoria (Mês Atual)
                     </div>
                     <div>
@@ -373,14 +382,29 @@
             fetch('/api/summary')
                 .then(response => response.json())
                 .then(data => {
+                    // Renderizar Barras de Progresso do Orçamento
+                    const budgetContainer = document.getElementById('budgetProgress');
+                    data.budget_progress.forEach(item => {
+                        const percentage = item.budgeted > 0 ? (item.spent / item.budgeted) * 100 : 0;
+                        const progressBar = `
+                            <div class="budget-item">
+                                <span>${item.category}</span>
+                                <progress value="${item.spent}" max="${item.budgeted}"></progress>
+                                <span>R$ ${item.spent.toFixed(2)} / R$ ${item.budgeted.toFixed(2)}</span>
+                            </div>
+                        `;
+                        budgetContainer.innerHTML += progressBar;
+                    });
+
+                    // Renderizar Gráfico de Pizza de Despesas
                     const ctx = document.getElementById('expenseChart').getContext('2d');
                     new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: data.labels,
+                            labels: data.expense_chart.labels,
                             datasets: [{
                                 label: 'Despesas por Categoria',
-                                data: data.data,
+                                data: data.expense_chart.data,
                                 backgroundColor: [
                                     'rgba(255, 99, 132, 0.8)',
                                     'rgba(54, 162, 235, 0.8)',
@@ -388,33 +412,12 @@
                                     'rgba(75, 192, 192, 0.8)',
                                     'rgba(153, 102, 255, 0.8)',
                                     'rgba(255, 159, 64, 0.8)'
-                                ],
-                                borderColor: [
-                                    'rgba(255, 99, 132, 1)',
-                                    'rgba(54, 162, 235, 1)',
-                                    'rgba(255, 206, 86, 1)',
-                                    'rgba(75, 192, 192, 1)',
-                                    'rgba(153, 102, 255, 1)',
-                                    'rgba(255, 159, 64, 1)'
-                                ],
-                                borderWidth: 1
+                                ]
                             }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    position: 'top',
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Distribuição de Despesas'
-                                }
-                            }
                         }
                     });
                 })
-                .catch(error => console.error('Erro ao buscar dados para o gráfico:', error));
+                .catch(error => console.error('Erro ao buscar dados do dashboard:', error));
         });
     </script>
 </body>
