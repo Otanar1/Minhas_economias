@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Orçamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Adicionar Novo Orçamento</h1>
+
+        <form method="POST" action="{{ url_for('budgets.add_budget') }}">
+            <div class="form-group">
+                <label for="category_id">Categoria</label>
+                <select name="category_id" id="category_id" required>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="amount">Valor Orçado</label>
+                <input type="number" name="amount" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label for="month">Mês</label>
+                <input type="number" name="month" id="month" min="1" max="12" required>
+            </div>
+            <div class="form-group">
+                <label for="year">Ano</label>
+                <input type="number" name="year" id="year" min="2020" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Adicionar Orçamento</button>
+            </div>
+        </form>
+        <a href="{{ url_for('budgets.list_budgets') }}">Cancelar</a>
+    </div>
+</body>
+</html>
