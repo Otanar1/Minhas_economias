@@ -52,8 +52,8 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     preferences = db.Column(db.JSON, default={})
     
     accounts = db.relationship('Account', backref='user', lazy=True, cascade="all, delete-orphan")
@@ -70,7 +70,7 @@ class Account(db.Model):
     name = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(50), nullable=False)  # carteira, conta_corrente, poupanca, cartao_credito
     balance = db.Column(db.Float, default=0.0)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     active = db.Column(db.Boolean, default=True)
     
     transactions = db.relationship('Transaction', backref='account', lazy=True, cascade="all, delete-orphan")
@@ -97,7 +97,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)
     type = db.Column(db.String(50), nullable=False)  # entrada, saída
     date = db.Column(db.Date, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     
     def to_dict(self):
         return {
@@ -121,7 +121,7 @@ class Dream(db.Model):
     target_amount = db.Column(db.Float, nullable=False)
     current_amount = db.Column(db.Float, default=0.0)
     target_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     status = db.Column(db.String(20), default='ativo')  # ativo, concluído, cancelado
 
 class Budget(db.Model):
@@ -134,7 +134,7 @@ class Budget(db.Model):
     amount = db.Column(db.Float, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
 
 # Definição das rotas de autenticação (mantidas como antes)
 auth_bp = Blueprint('auth', __name__)
@@ -192,8 +192,8 @@ def register():
                 name=name,
                 email=email,
                 password=generate_password_hash(password),
-                created_at=datetime.datetime.utcnow(),
-                updated_at=datetime.datetime.utcnow()
+                created_at=datetime.datetime.now(datetime.timezone.utc),
+                updated_at=datetime.datetime.now(datetime.timezone.utc)
             )
             
             db.session.add(new_user)
@@ -353,7 +353,7 @@ def setup_database():
                     name='Usuário de Teste',
                     email='renatolelias@gmail.com',
                     password=generate_password_hash('teste123'),
-                    created_at=datetime.datetime.utcnow()
+                created_at=datetime.datetime.now(datetime.timezone.utc)
                 )
                 db.session.add(test_user)
                 db.session.commit()

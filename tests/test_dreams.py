@@ -1,5 +1,5 @@
 import pytest
-from src.main import app, db, User, Dream
+from src.main import app, db, User, Dream, Account
 
 def test_add_dream(logged_in_client):
     """
@@ -84,3 +84,63 @@ def test_delete_dream(logged_in_client):
     with app.app_context():
         deleted_dream = db.session.get(Dream, dream_id)
         assert deleted_dream is None
+
+def test_contribute_to_dream_success(logged_in_client):
+    """
+    Testa uma contribuição bem-sucedida a um sonho.
+    """
+    client, user_id, account_id, _ = logged_in_client
+
+    with app.app_context():
+        account = db.session.get(Account, account_id)
+        initial_balance = account.balance
+        dream = Dream(user_id=user_id, name="Meu Sonho", target_amount=1000, type="Geral")
+        db.session.add(dream)
+        db.session.commit()
+        dream_id = dream.id
+
+    response = client.post(f'/dreams/contribute/{dream_id}', data={
+        'amount': '100.00',
+        'account_id': account_id
+    })
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        updated_dream = db.session.get(Dream, dream_id)
+        updated_account = db.session.get(Account, account_id)
+        assert updated_dream.current_amount == 100.00
+        assert updated_account.balance == initial_balance - 100.00
+
+def test_contribute_to_dream_insufficient_funds(logged_in_client):
+    """
+    Testa uma contribuição a um sonho com saldo insuficiente.
+    """
+    client, user_id, account_id, _ = logged_in_client
+
+    with app.app_context():
+        dream = Dream(user_id=user_id, name="Sonho Caro", target_amount=5000, type="Geral")
+        db.session.add(dream)
+        db.session.commit()
+        dream_id = dream.id
+        account = db.session.get(Account, account_id)
+        account.balance = 50.00
+        db.session.commit()
+
+    response = client.post(f'/dreams/contribute/{dream_id}', data={
+        'amount': '100.00',
+        'account_id': account_id
+    })
+
+    assert response.status_code == 302
+
+    with client.session_transaction() as session:
+        assert 'Saldo insuficiente' in session['_flashes'][0][1]
+
+def test_contribute_to_dream_unauthenticated(test_client):
+    """
+    Testa o acesso à página de contribuição sem autenticação.
+    """
+    response = test_client.get('/dreams/contribute/1')
+    assert response.status_code == 302
+    assert '/login' in response.location

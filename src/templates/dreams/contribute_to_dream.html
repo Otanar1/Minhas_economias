@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contribuir para {{ dream.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Contribuir para: {{ dream.name }}</h1>
+        <p>Meta: {{ dream.target_amount }} | Atual: {{ dream.current_amount }}</p>
+
+        <form method="POST" action="{{ url_for('dreams.contribute_to_dream', dream_id=dream.id) }}">
+            <div class="form-group">
+                <label for="amount">Valor da Contribuição</label>
+                <input type="number" name="amount" id="amount" step="0.01" min="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="account_id">Conta de Origem</label>
+                <select name="account_id" id="account_id" required>
+                    {% for account in accounts %}
+                        <option value="{{ account.id }}">{{ account.name }} (Saldo: {{ account.balance }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">Contribuir</button>
+            </div>
+        </form>
+        <a href="{{ url_for('dreams.list_dreams') }}">Cancelar</a>
+    </div>
+</body>
+</html>
