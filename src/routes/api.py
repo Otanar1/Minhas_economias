@@ -71,3 +71,36 @@ def summary():
             'data': chart_values
         }
     })
+
+@api_bp.route('/balance_evolution')
+def balance_evolution():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Acesso não autorizado'}), 401
+
+    user_id = session['user_id']
+
+    # Busca todas as transações do usuário, ordenadas por data
+    transactions = db.session.execute(
+        db.select(Transaction).filter_by(user_id=user_id).order_by(Transaction.date.asc())
+    ).scalars().all()
+
+    labels = []
+    data = []
+    current_balance = 0
+
+    # Calcula o saldo cumulativo
+    for trans in transactions:
+        if trans.type == 'entrada':
+            current_balance += trans.amount
+        else: # 'saída'
+            current_balance -= trans.amount
+
+        # Adiciona ao resultado, evitando datas duplicadas para manter o gráfico limpo
+        if not labels or labels[-1] != trans.date.strftime('%Y-%m-%d'):
+            labels.append(trans.date.strftime('%Y-%m-%d'))
+            data.append(round(current_balance, 2))
+        else:
+            # Se a data for a mesma, atualiza o último saldo registrado
+            data[-1] = round(current_balance, 2)
+
+    return jsonify({'labels': labels, 'data': data})

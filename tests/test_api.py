@@ -67,3 +67,43 @@ def test_summary_authenticated_with_data(logged_in_client):
 
     assert chart_data['data'][food_index] == pytest.approx(230.75)
     assert chart_data['data'][transport_index] == pytest.approx(120.50)
+
+def test_balance_evolution_api(logged_in_client):
+    """
+    Testa o endpoint da API de evolução de saldo.
+    """
+    client, user_id, account_id, category_id = logged_in_client
+
+    with app.app_context():
+        # Criar transações em datas diferentes
+        t1 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Salário', amount=2000, type='entrada', date=date(2025, 1, 5))
+        t2 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Aluguel', amount=800, type='saída', date=date(2025, 1, 10))
+        t3 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Supermercado', amount=300, type='saída', date=date(2025, 1, 15))
+        # Duas transações no mesmo dia
+        t4 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Freela', amount=500, type='entrada', date=date(2025, 1, 20))
+        t5 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Jantar', amount=100, type='saída', date=date(2025, 1, 20))
+        db.session.add_all([t1, t2, t3, t4, t5])
+        db.session.commit()
+
+    response = client.get('/api/balance_evolution')
+    assert response.status_code == 200
+
+    data = response.json
+
+    # Verificar os rótulos (datas)
+    expected_labels = [
+        '2025-01-05',
+        '2025-01-10',
+        '2025-01-15',
+        '2025-01-20'
+    ]
+    assert data['labels'] == expected_labels
+
+    # Verificar os dados (saldos cumulativos)
+    expected_data = [
+        2000.00, # Após t1
+        1200.00, # Após t2
+        900.00,  # Após t3
+        1300.00  # Após t4 e t5 (2000 - 800 - 300 + 500 - 100)
+    ]
+    assert data['data'] == expected_data

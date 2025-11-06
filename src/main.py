@@ -329,6 +329,7 @@ from src.routes.transactions import transactions_bp
 from src.routes.api import api_bp
 from src.routes.budgets import budgets_bp
 from src.routes.dreams import dreams_bp
+from src.routes.analysis import analysis_bp
 from src.commands import register_commands
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
@@ -336,6 +337,7 @@ app.register_blueprint(transactions_bp, url_prefix='/transactions')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(budgets_bp, url_prefix='/budgets')
 app.register_blueprint(dreams_bp, url_prefix='/dreams')
+app.register_blueprint(analysis_bp, url_prefix='/analysis')
 
 # Registrar comandos CLI
 register_commands(app)
