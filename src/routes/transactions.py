@@ -22,6 +22,9 @@ def add_transaction():
             date_str = request.form.get('date')
             account_id = int(request.form.get('account_id'))
             category_id = int(request.form.get('category_id'))
+            recurring = request.form.get('recurring') == 'true'
+            recurrence_frequency = request.form.get('recurrence_frequency') if recurring else None
+
 
             # 2. Validar dados (básico)
             if not all([trans_type, description, amount, date_str, account_id, category_id]):
@@ -48,7 +51,9 @@ def add_transaction():
                 description=description,
                 amount=amount,
                 type=trans_type,
-                date=date
+                date=date,
+                recurring=recurring,
+                recurrence_frequency=recurrence_frequency
             )
 
             # 5. Atualizar o saldo da conta
@@ -159,6 +164,8 @@ def edit_transaction(transaction_id):
             transaction.date = datetime.datetime.strptime(request.form.get('date'), '%Y-%m-%d').date()
             transaction.account_id = int(request.form.get('account_id'))
             transaction.category_id = int(request.form.get('category_id'))
+            transaction.recurring = request.form.get('recurring') == 'true'
+            transaction.recurrence_frequency = request.form.get('recurrence_frequency') if transaction.recurring else None
 
             # 3. Aplicar o novo efeito da transação
             new_account = db.session.get(Account, transaction.account_id)

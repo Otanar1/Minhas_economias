@@ -98,6 +98,9 @@ class Transaction(db.Model):
     type = db.Column(db.String(50), nullable=False)  # entrada, saída
     date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    recurring = db.Column(db.Boolean, default=False)
+    recurrence_frequency = db.Column(db.String(20), nullable=True)
+    consolidated = db.Column(db.Boolean, default=False)
     
     def to_dict(self):
         return {
@@ -108,7 +111,9 @@ class Transaction(db.Model):
             'date': self.date.isoformat() if self.date else None,
             'account_id': self.account_id,
             'category_id': self.category_id,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'recurring': self.recurring,
+            'recurrence_frequency': self.recurrence_frequency
         }
 
 class Dream(db.Model):
@@ -324,12 +329,16 @@ from src.routes.transactions import transactions_bp
 from src.routes.api import api_bp
 from src.routes.budgets import budgets_bp
 from src.routes.dreams import dreams_bp
+from src.commands import register_commands
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(transactions_bp, url_prefix='/transactions')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(budgets_bp, url_prefix='/budgets')
 app.register_blueprint(dreams_bp, url_prefix='/dreams')
+
+# Registrar comandos CLI
+register_commands(app)
 
 # Rota raiz
 @app.route('/')

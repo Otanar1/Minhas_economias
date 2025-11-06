@@ -47,8 +47,31 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="recurring">Transação Recorrente</label>
+                <input type="checkbox" name="recurring" id="recurring" value="true" {% if transaction.recurring %}checked{% endif %}>
+            </div>
+            <div class="form-group" id="recurrence_frequency_group" {% if not transaction.recurring %}style="display: none;"{% endif %}>
+                <label for="recurrence_frequency">Frequência da Recorrência</label>
+                <select name="recurrence_frequency" id="recurrence_frequency">
+                    <option value="diaria" {% if transaction.recurrence_frequency == 'diaria' %}selected{% endif %}>Diária</option>
+                    <option value="semanal" {% if transaction.recurrence_frequency == 'semanal' %}selected{% endif %}>Semanal</option>
+                    <option value="mensal" {% if transaction.recurrence_frequency == 'mensal' %}selected{% endif %}>Mensal</option>
+                    <option value="anual" {% if transaction.recurrence_frequency == 'anual' %}selected{% endif %}>Anual</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <button type="submit">Salvar Alterações</button>
             </div>
+            <script>
+                document.getElementById('recurring').addEventListener('change', function() {
+                    var frequencyGroup = document.getElementById('recurrence_frequency_group');
+                    if (this.checked) {
+                        frequencyGroup.style.display = 'block';
+                    } else {
+                        frequencyGroup.style.display = 'none';
+                    }
+                });
+            </script>
         </form>
         <a href="{{ url_for('transactions.list_transactions') }}">Cancelar</a>
     </div>

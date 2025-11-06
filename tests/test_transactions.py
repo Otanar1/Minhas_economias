@@ -1,7 +1,9 @@
 import pytest
 from src.main import app, db, User, Account, Category, Transaction
-from datetime import date
+from src.commands import _generate_recurring_transactions_logic
+from datetime import date, timedelta
 from werkzeug.security import generate_password_hash
+from dateutil.relativedelta import relativedelta
 
 
 def test_add_expense_transaction(logged_in_client):
@@ -163,3 +165,26 @@ def test_edit_transaction(logged_in_client):
         # O saldo deve ser o inicial menos o novo valor da transação
         updated_account = db.session.get(Account, account_id)
         assert updated_account.balance == initial_balance - 75.00
+
+def test_add_recurring_transaction(logged_in_client):
+    """
+    Testa a adição de uma transação recorrente.
+    """
+    client, user_id, account_id, category_id = logged_in_client
+
+    response = client.post('/transactions/add', data={
+        'type': 'saída',
+        'description': 'Assinatura Mensal',
+        'amount': '29.99',
+        'date': '2025-02-01',
+        'account_id': account_id,
+        'category_id': category_id,
+        'recurring': 'true',
+        'recurrence_frequency': 'mensal'
+    })
+    assert response.status_code == 302
+
+    with app.app_context():
+        transaction = db.session.query(Transaction).filter_by(description='Assinatura Mensal').one()
+        assert transaction.recurring is True
+        assert transaction.recurrence_frequency == 'mensal'

@@ -57,8 +57,31 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="recurring">Transação Recorrente</label>
+                <input type="checkbox" name="recurring" id="recurring" value="true">
+            </div>
+            <div class="form-group" id="recurrence_frequency_group" style="display: none;">
+                <label for="recurrence_frequency">Frequência da Recorrência</label>
+                <select name="recurrence_frequency" id="recurrence_frequency">
+                    <option value="diaria">Diária</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensal">Mensal</option>
+                    <option value="anual">Anual</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <button type="submit">Adicionar Transação</button>
             </div>
+            <script>
+                document.getElementById('recurring').addEventListener('change', function() {
+                    var frequencyGroup = document.getElementById('recurrence_frequency_group');
+                    if (this.checked) {
+                        frequencyGroup.style.display = 'block';
+                    } else {
+                        frequencyGroup.style.display = 'none';
+                    }
+                });
+            </script>
         </form>
         <a href="{{ url_for('dashboard.index') }}">Voltar para o Dashboard</a>
     </div>
