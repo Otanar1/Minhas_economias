@@ -232,6 +232,7 @@
             <a href="{{ url_for('dreams.list_dreams') }}" class="nav-item">Sonhos</a>
             <a href="{{ url_for('budgets.list_budgets') }}" class="nav-item">Orçamento</a>
             <a href="{{ url_for('analysis.index') }}" class="nav-item">Análise</a>
+            <a href="{{ url_for('accounts.index') }}" class="nav-item">Contas</a>
             <a href="#" class="nav-item">Configurações</a>
         </nav>
 
@@ -267,7 +268,7 @@
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-secondary">Limpar</button>
-                    <button class="btn btn-primary">Nova conta</button>
+                    <a href="{{ url_for('accounts.add_account') }}" class="btn btn-primary">Nova conta</a>
                 </div>
 
                 {# Seção de Convites (mantida como estática por enquanto) #}

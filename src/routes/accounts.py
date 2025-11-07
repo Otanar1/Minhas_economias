@@ -1,95 +1,77 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, flash, jsonify
-from src.models.user import User, db
-from src.models.account import Account
-from datetime import datetime
+from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from src.main import db, Account
 
-accounts_bp = Blueprint('accounts', __name__)
+accounts_bp = Blueprint('accounts', __name__, template_folder='../templates')
 
 @accounts_bp.route('/')
 def index():
-    # Verificar se o usuário está autenticado
+    """
+    Renderiza a página de gerenciamento de contas, listando todas as contas do usuário.
+    """
     if 'user_id' not in session:
+        flash('Por favor, faça login para acessar esta página.', 'warning')
         return redirect(url_for('auth.login'))
-    
-    # Buscar contas do usuário
-    accounts = Account.query.filter_by(user_id=session['user_id'], active=True).all()
+
+    user_id = session['user_id']
+    accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id)).scalars().all()
     
     return render_template('accounts/index.html', accounts=accounts)
 
-@accounts_bp.route('/create', methods=['GET', 'POST'])
-def create():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        account_type = request.form.get('type')
-        initial_balance = float(request.form.get('initial_balance', 0))
-        
-        # Validar dados
-        if not name or not account_type:
-            flash('Nome e tipo de conta são obrigatórios', 'error')
-            return render_template('accounts/create.html')
-        
-        # Criar nova conta
-        new_account = Account(
-            user_id=session['user_id'],
-            name=name,
-            type=account_type,
-            balance=initial_balance
-        )
-        
-        db.session.add(new_account)
-        db.session.commit()
-        
-        flash('Conta criada com sucesso!', 'success')
-        return redirect(url_for('dashboard.index'))
-    
-    return render_template('accounts/create.html')
-
-@accounts_bp.route('/<int:account_id>/edit', methods=['GET', 'POST'])
-def edit(account_id):
-    # Buscar conta
-    account = Account.query.filter_by(id=account_id, user_id=session['user_id']).first_or_404()
-    
-    if request.method == 'POST':
-        name = request.form.get('name')
-        account_type = request.form.get('type')
-        
-        # Validar dados
-        if not name or not account_type:
-            flash('Nome e tipo de conta são obrigatórios', 'error')
-            return render_template('accounts/edit.html', account=account)
-        
-        # Atualizar conta
-        account.name = name
-        account.type = account_type
-        db.session.commit()
-        
-        flash('Conta atualizada com sucesso!', 'success')
-        return redirect(url_for('dashboard.index'))
-    
-    return render_template('accounts/edit.html', account=account)
-
-@accounts_bp.route('/<int:account_id>/delete', methods=['POST'])
-def delete(account_id):
-    # Buscar conta
-    account = Account.query.filter_by(id=account_id, user_id=session['user_id']).first_or_404()
-    
-    # Desativar conta (soft delete)
-    account.active = False
-    db.session.commit()
-    
-    flash('Conta removida com sucesso!', 'success')
-    return redirect(url_for('dashboard.index'))
-
-@accounts_bp.route('/api/list')
-def api_list():
-    # Verificar se o usuário está autenticado
+@accounts_bp.route('/add', methods=['GET', 'POST'])
+def add_account():
     if 'user_id' not in session:
-        return jsonify({'error': 'Não autorizado'}), 401
-    
-    # Buscar contas do usuário
-    accounts = Account.query.filter_by(user_id=session['user_id'], active=True).all()
-    
-    # Converter para dicionário
-    accounts_data = [account.to_dict() for account in accounts]
-    
-    return jsonify(accounts_data)
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            account_type = request.form.get('type')
+            balance = float(request.form.get('balance'))
+            user_id = session['user_id']
+
+            if not name or not account_type:
+                flash('Nome e tipo da conta são obrigatórios.', 'error')
+                return render_template('accounts/add_account.html')
+
+            new_account = Account(
+                user_id=user_id,
+                name=name,
+                type=account_type,
+                balance=balance
+            )
+            db.session.add(new_account)
+            db.session.commit()
+            flash('Conta adicionada com sucesso!', 'success')
+            return redirect(url_for('accounts.index'))
+
+        except Exception as e:
+            flash(f'Ocorreu um erro ao adicionar a conta: {e}', 'error')
+            db.session.rollback()
+
+    return render_template('accounts/add_account.html')
+
+@accounts_bp.route('/edit/<int:account_id>', methods=['GET', 'POST'])
+def edit_account(account_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    user_id = session['user_id']
+    account = db.session.get(Account, account_id)
+
+    if not account or account.user_id != user_id:
+        flash('Conta não encontrada ou acesso não autorizado.', 'error')
+        return redirect(url_for('accounts.index'))
+
+    if request.method == 'POST':
+        try:
+            account.name = request.form.get('name')
+            account.active = request.form.get('active') == 'true'
+
+            db.session.commit()
+            flash('Conta atualizada com sucesso!', 'success')
+            return redirect(url_for('accounts.index'))
+        except Exception as e:
+            flash(f'Ocorreu um erro ao atualizar a conta: {e}', 'error')
+            db.session.rollback()
+
+    return render_template('accounts/edit_account.html', account=account)
