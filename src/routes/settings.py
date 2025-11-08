@@ -23,11 +23,12 @@ def index():
         user.city = request.form.get('city')
 
         # Handle Preferences
-        preferences = {
-            'receive_tips': request.form.get('receive_tips') == 'on',
-            'receive_news': request.form.get('receive_news') == 'on',
-            'receive_partner_news': request.form.get('receive_partner_news') == 'on'
-        }
+        preferences = user.preferences or {}
+        preferences['receive_tips'] = request.form.get('receive_tips') == 'on'
+        preferences['receive_news'] = request.form.get('receive_news') == 'on'
+        preferences['receive_partner_news'] = request.form.get('receive_partner_news') == 'on'
+        preferences['initial_screen'] = request.form.get('initial_screen')
+        preferences['default_account'] = request.form.get('default_account')
         user.preferences = preferences
         
         db.session.commit()

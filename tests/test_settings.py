@@ -43,7 +43,9 @@ def test_update_profile_and_preferences(client):
         'city': 'São Paulo',
         'receive_tips': 'on',
         'receive_news': 'on',
-        'receive_partner_news': 'off'
+        'receive_partner_news': 'off',
+        'initial_screen': 'transactions.index',
+        'default_account': 1
     }, follow_redirects=True)
 
     assert response.status_code == 200
@@ -55,6 +57,8 @@ def test_update_profile_and_preferences(client):
     assert updated_user.preferences['receive_tips'] == True
     assert updated_user.preferences['receive_news'] == True
     assert 'receive_partner_news' not in updated_user.preferences or updated_user.preferences['receive_partner_news'] == False
+    assert updated_user.preferences['initial_screen'] == 'transactions.index'
+    assert updated_user.preferences['default_account'] == '1'
 
 def test_change_password(client):
     # Create a user and log in

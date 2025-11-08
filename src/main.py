@@ -121,7 +121,7 @@ def register():
                 Account(name='Poupança', type='poupanca', balance=0.0, user_id=new_user.id, active=True),
                 Account(name='Cartão de Crédito', type='cartao_credito', balance=0.0, user_id=new_user.id, active=True)
             ]
-            db.session.bulk__save_objects(accounts)
+            db.session.bulk_save_objects(accounts)
             
             db.session.commit()
             
@@ -216,6 +216,7 @@ from src.routes.dreams import dreams_bp
 from src.routes.analysis import analysis_bp
 from src.routes.accounts import accounts_bp
 from src.routes.settings import settings_bp
+from src.routes.categories import categories_bp
 from src.commands import register_commands
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
@@ -226,12 +227,16 @@ app.register_blueprint(dreams_bp, url_prefix='/dreams')
 app.register_blueprint(analysis_bp, url_prefix='/analysis')
 app.register_blueprint(accounts_bp, url_prefix='/accounts')
 app.register_blueprint(settings_bp, url_prefix='/settings')
+app.register_blueprint(categories_bp, url_prefix='/categories')
 
 register_commands(app)
 
 @app.route('/')
 def index_root():
     if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        if user and user.preferences and 'initial_screen' in user.preferences:
+            return redirect(url_for(user.preferences['initial_screen']))
         return redirect(url_for('dashboard.index'))
     return redirect(url_for('auth.login'))
 

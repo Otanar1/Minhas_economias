@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from src.main import db
-from src.main import Transaction, Account, Category
+from src.models import Transaction, Account, Category, User
 import datetime
 
 transactions_bp = Blueprint('transactions', __name__, template_folder='../templates')
@@ -77,10 +77,12 @@ def add_transaction():
             db.session.rollback()
 
     # Para a requisição GET, buscamos as contas e categorias do usuário para popular os seletores do formulário.
+    user = db.session.get(User, user_id)
     accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id, active=True)).scalars().all()
     categories = db.session.execute(db.select(Category).filter_by(user_id=user_id)).scalars().all()
+    default_account = user.preferences.get('default_account') if user.preferences else None
 
-    return render_template('transactions/add_transaction.html', accounts=accounts, categories=categories)
+    return render_template('transactions/add_transaction.html', accounts=accounts, categories=categories, default_account=default_account)
 
 @transactions_bp.route('/')
 def list_transactions():

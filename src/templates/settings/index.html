@@ -36,26 +36,68 @@
                         <!-- Preferences -->
                         <div class="card">
                             <div class="card-header">
-                                Preferências
+                                <ul class="nav nav-tabs card-header-tabs">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab" aria-controls="notifications" aria-selected="true">Notificações</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="initial-screen-tab" data-toggle="tab" href="#initial-screen" role="tab" aria-controls="initial-screen" aria-selected="false">Tela Inicial</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="accounts-tab" data-toggle="tab" href="#accounts" role="tab" aria-controls="accounts" aria-selected="false">Contas</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="categories-tab" data-toggle="tab" href="#categories" role="tab" aria-controls="categories" aria-selected="false">Categorias</a>
+                                    </li>
+                                </ul>
                             </div>
                             <div class="card-body">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="receive_tips" name="receive_tips" {{ 'checked' if user.preferences and user.preferences.receive_tips }}>
-                                    <label class="form-check-label" for="receive_tips">
-                                        Quero receber dicas de como economizar.
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="receive_news" name="receive_news" {{ 'checked' if user.preferences and user.preferences.receive_news }}>
-                                    <label class="form-check-label" for="receive_news">
-                                        Quero receber novidades do Minhas Economias.
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="receive_partner_news" name="receive_partner_news" {{ 'checked' if user.preferences and user.preferences.receive_partner_news }}>
-                                    <label class="form-check-label" for="receive_partner_news">
-                                        Quero receber notícias dos parceiros do Minhas Economias.
-                                    </label>
+                                <div class="tab-content" id="preferencesTabContent">
+                                    <div class="tab-pane fade show active" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="receive_tips" name="receive_tips" {{ 'checked' if user.preferences and user.preferences.receive_tips }}>
+                                            <label class="form-check-label" for="receive_tips">
+                                                Quero receber dicas de como economizar.
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="receive_news" name="receive_news" {{ 'checked' if user.preferences and user.preferences.receive_news }}>
+                                            <label class="form-check-label" for="receive_news">
+                                                Quero receber novidades do Minhas Economias.
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="receive_partner_news" name="receive_partner_news" {{ 'checked' if user.preferences and user.preferences.receive_partner_news }}>
+                                            <label class="form-check-label" for="receive_partner_news">
+                                                Quero receber notícias dos parceiros do Minhas Economias.
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="initial-screen" role="tabpanel" aria-labelledby="initial-screen-tab">
+                                        <div class="form-group">
+                                            <label for="initial_screen">Tela inicial após o login</label>
+                                            <select class="form-control" id="initial_screen" name="initial_screen">
+                                                <option value="dashboard.index" {{ 'selected' if user.preferences and user.preferences.initial_screen == 'dashboard.index' }}>Dashboard</option>
+                                                <option value="transactions.index" {{ 'selected' if user.preferences and user.preferences.initial_screen == 'transactions.index' }}>Transações</option>
+                                                <option value="dreams.index" {{ 'selected' if user.preferences and user.preferences.initial_screen == 'dreams.index' }}>Sonhos</option>
+                                                <option value="budgets.index" {{ 'selected' if user.preferences and user.preferences.initial_screen == 'budgets.index' }}>Orçamento</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="accounts" role="tabpanel" aria-labelledby="accounts-tab">
+                                        <div class="form-group">
+                                            <label for="default_account">Conta padrão para novas transações</label>
+                                            <select class="form-control" id="default_account" name="default_account">
+                                                {% for account in user.accounts %}
+                                                    <option value="{{ account.id }}" {{ 'selected' if user.preferences and user.preferences.default_account == account.id }}>{{ account.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+                                        <p>Gerencie suas categorias de transações.</p>
+                                        <a href="{{ url_for('categories.index') }}" class="btn btn-primary">Gerenciar Categorias</a>
+                                    </div>
                                 </div>
                                 <hr>
                                 <button type="submit" class="btn btn-success">Salvar</button>
