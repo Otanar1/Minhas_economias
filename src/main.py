@@ -2,11 +2,12 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))  # DON'T CHANGE THIS !!!
 from flask import Flask, render_template, redirect, url_for, session, flash, request, Blueprint
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import logging
 from .utils import format_currency
+from flask_migrate import Migrate
+from src.models import db, User, Account, Category, Transaction, Dream, Budget
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -18,21 +19,17 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'minhaseconomias2025secr
 
 # Configuração do banco de dados para produção
 if os.environ.get('DATABASE_URL'):
-    # Usar o DATABASE_URL fornecido pelo ambiente
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 else:
-    # Configuração para MySQL local (desenvolvimento)
     mysql_user = os.environ.get('MYSQL_USER', 'root')
     mysql_password = os.environ.get('MYSQL_PASSWORD', 'password')
-    mysql_host = os.environ.get('MYSQL_HOST', 'db') # Alterado para 'db' (nome do serviço no docker-compose)
+    mysql_host = os.environ.get('MYSQL_HOST', 'db')
     mysql_port = os.environ.get('MYSQL_PORT', '3306')
     mysql_db = os.environ.get('MYSQL_DB', 'minhas_economias')
-    
     app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Adiciona opções de engine apenas se não estiver usando SQLite (para compatibilidade com testes)
 if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_pre_ping': True,
@@ -41,107 +38,9 @@ if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
         'max_overflow': 20
     }
 
-# Inicialização do banco de dados
-db = SQLAlchemy(app)
+db.init_app(app)
+migrate = Migrate(app, db)
 
-# Definição dos modelos (mantidos como antes)
-class User(db.Model):
-    __tablename__ = 'users'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    preferences = db.Column(db.JSON, default={})
-    
-    accounts = db.relationship('Account', backref='user', lazy=True, cascade="all, delete-orphan")
-    transactions = db.relationship('Transaction', backref='user', lazy=True, cascade="all, delete-orphan")
-    dreams = db.relationship('Dream', backref='user', lazy=True, cascade="all, delete-orphan")
-    budgets = db.relationship('Budget', backref='user', lazy=True, cascade="all, delete-orphan")
-    categories = db.relationship('Category', backref='user', lazy=True, cascade="all, delete-orphan")
-
-class Account(db.Model):
-    __tablename__ = 'accounts'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # carteira, conta_corrente, poupanca, cartao_credito
-    balance = db.Column(db.Float, default=0.0)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    active = db.Column(db.Boolean, default=True)
-    
-    transactions = db.relationship('Transaction', backref='account', lazy=True, cascade="all, delete-orphan")
-
-class Category(db.Model):
-    __tablename__ = 'categories'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # entrada, saída
-    
-    transactions = db.relationship('Transaction', backref='category', lazy=True)
-    budgets = db.relationship('Budget', backref='category', lazy=True)
-
-class Transaction(db.Model):
-    __tablename__ = 'transactions'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
-    description = db.Column(db.String(200), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # entrada, saída
-    date = db.Column(db.Date, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    recurring = db.Column(db.Boolean, default=False)
-    recurrence_frequency = db.Column(db.String(20), nullable=True)
-    consolidated = db.Column(db.Boolean, default=False)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'description': self.description,
-            'amount': self.amount,
-            'type': self.type,
-            'date': self.date.isoformat() if self.date else None,
-            'account_id': self.account_id,
-            'category_id': self.category_id,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'recurring': self.recurring,
-            'recurrence_frequency': self.recurrence_frequency
-        }
-
-class Dream(db.Model):
-    __tablename__ = 'dreams'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(50), nullable=False)  # viagem, carro, eletrônico, casa, etc
-    target_amount = db.Column(db.Float, nullable=False)
-    current_amount = db.Column(db.Float, default=0.0)
-    target_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-    status = db.Column(db.String(20), default='ativo')  # ativo, concluído, cancelado
-
-class Budget(db.Model):
-    __tablename__ = 'budgets'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
-    name = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    month = db.Column(db.Integer, nullable=False)
-    year = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
-
-# Definição das rotas de autenticação (mantidas como antes)
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -153,7 +52,6 @@ def login():
             
             logger.info(f"Tentativa de login para o email: {email}")
             
-            # Otimização: Consulta direta sem relacionamentos para melhorar performance
             user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
             
             if user and check_password_hash(user.password, password):
@@ -196,15 +94,14 @@ def register():
             new_user = User(
                 name=name,
                 email=email,
-                password=generate_password_hash(password),
                 created_at=datetime.datetime.now(datetime.timezone.utc),
                 updated_at=datetime.datetime.now(datetime.timezone.utc)
             )
+            new_user.set_password(password)
             
             db.session.add(new_user)
             db.session.commit()
             
-            # Criar categorias padrão para o novo usuário
             categories = [
                 Category(name='Alimentação', type='saída', user_id=new_user.id),
                 Category(name='Transporte', type='saída', user_id=new_user.id),
@@ -218,14 +115,13 @@ def register():
             ]
             db.session.bulk_save_objects(categories)
             
-            # Criar contas padrão para o novo usuário
             accounts = [
                 Account(name='Carteira', type='carteira', balance=0.0, user_id=new_user.id, active=True),
                 Account(name='Conta Corrente', type='conta_corrente', balance=0.0, user_id=new_user.id, active=True),
                 Account(name='Poupança', type='poupanca', balance=0.0, user_id=new_user.id, active=True),
                 Account(name='Cartão de Crédito', type='cartao_credito', balance=0.0, user_id=new_user.id, active=True)
             ]
-            db.session.bulk_save_objects(accounts)
+            db.session.bulk__save_objects(accounts)
             
             db.session.commit()
             
@@ -247,8 +143,6 @@ def forgot_password():
             user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
             
             if user:
-                # Em um ambiente real, enviaríamos um email com link para redefinição de senha
-                # Aqui, apenas simulamos o processo
                 flash('Instruções para redefinição de senha foram enviadas para seu email', 'success')
                 return redirect(url_for('auth.login'))
             else:
@@ -264,7 +158,6 @@ def logout():
     session.clear()
     return redirect(url_for('auth.login'))
 
-# Definição das rotas de dashboard
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
@@ -280,13 +173,10 @@ def index():
             session.clear()
             return redirect(url_for("auth.login"))
         
-        # Otimização: Consultas separadas para melhorar performance
         accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id, active=True)).scalars().all()
         
-        # Calcular saldo total
         total_balance = sum(account.balance for account in accounts)
         
-        # Obter transações recentes - limitando a 5 para melhorar performance
         recent_transactions = db.session.execute(
             db.select(Transaction)
             .filter_by(user_id=user_id)
@@ -294,12 +184,8 @@ def index():
             .limit(5)
         ).scalars().all()
 
-        # *** NOVO: Formatar dados para o template ***
         accounts_formatted = [
-            {
-                'name': acc.name,
-                'balance_formatted': format_currency(acc.balance)
-            }
+            {'name': acc.name, 'balance_formatted': format_currency(acc.balance)}
             for acc in accounts
         ]
         total_balance_formatted = format_currency(total_balance)
@@ -312,25 +198,24 @@ def index():
             }
             for tx in recent_transactions
         ]
-        # *** FIM NOVO ***
         
         return render_template("dashboard/index.html", 
                             user=user, 
-                            accounts_formatted=accounts_formatted, # Passar contas formatadas
-                            total_balance_formatted=total_balance_formatted, # Passar saldo total formatado
-                            recent_transactions_formatted=recent_transactions_formatted) # Passar transações formatadas
+                            accounts_formatted=accounts_formatted,
+                            total_balance_formatted=total_balance_formatted,
+                            recent_transactions_formatted=recent_transactions_formatted)
     except Exception as e:
         logger.error(f"Erro no dashboard: {str(e)}")
         flash('Ocorreu um erro ao carregar o dashboard. Por favor, tente novamente.', 'error')
         return redirect(url_for('auth.login'))
 
-# Registrar blueprints
 from src.routes.transactions import transactions_bp
 from src.routes.api import api_bp
 from src.routes.budgets import budgets_bp
 from src.routes.dreams import dreams_bp
 from src.routes.analysis import analysis_bp
 from src.routes.accounts import accounts_bp
+from src.routes.settings import settings_bp
 from src.commands import register_commands
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
@@ -340,71 +225,15 @@ app.register_blueprint(budgets_bp, url_prefix='/budgets')
 app.register_blueprint(dreams_bp, url_prefix='/dreams')
 app.register_blueprint(analysis_bp, url_prefix='/analysis')
 app.register_blueprint(accounts_bp, url_prefix='/accounts')
+app.register_blueprint(settings_bp, url_prefix='/settings')
 
-# Registrar comandos CLI
 register_commands(app)
 
-# Rota raiz
 @app.route('/')
-def index_root(): # Renomeado para evitar conflito com dashboard.index
+def index_root():
     if 'user_id' in session:
         return redirect(url_for('dashboard.index'))
     return redirect(url_for('auth.login'))
 
-# Função para criar tabelas e dados iniciais (mantida como antes)
-def setup_database():
-    try:
-        with app.app_context():
-            # Criar todas as tabelas
-            db.create_all()
-            
-            # Verificar se já existem usuários
-            user_count = db.session.query(db.func.count(User.id)).scalar()
-            if user_count == 0:
-                # Criar usuário de teste
-                test_user = User(
-                    name='Usuário de Teste',
-                    email='renatolelias@gmail.com',
-                    password=generate_password_hash('teste123'),
-                created_at=datetime.datetime.now(datetime.timezone.utc)
-                )
-                db.session.add(test_user)
-                db.session.commit()
-                
-                # Criar categorias padrão
-                categories = [
-                    Category(name='Alimentação', type='saída', user_id=test_user.id),
-                    Category(name='Transporte', type='saída', user_id=test_user.id),
-                    Category(name='Moradia', type='saída', user_id=test_user.id),
-                    Category(name='Lazer', type='saída', user_id=test_user.id),
-                    Category(name='Saúde', type='saída', user_id=test_user.id),
-                    Category(name='Educação', type='saída', user_id=test_user.id),
-                    Category(name='Salário', type='entrada', user_id=test_user.id),
-                    Category(name='Investimentos', type='entrada', user_id=test_user.id),
-                    Category(name='Outros', type='entrada', user_id=test_user.id)
-                ]
-                db.session.bulk_save_objects(categories)
-                db.session.commit()
-                
-                # Criar contas padrão
-                accounts = [
-                    Account(name='Carteira', type='carteira', balance=500.0, user_id=test_user.id, active=True),
-                    Account(name='Conta Corrente', type='conta_corrente', balance=2500.0, user_id=test_user.id, active=True),
-                    Account(name='Poupança', type='poupanca', balance=10000.0, user_id=test_user.id, active=True),
-                    Account(name='Cartão de Crédito', type='cartao_credito', balance=0.0, user_id=test_user.id, active=True)
-                ]
-                db.session.bulk_save_objects(accounts)
-                db.session.commit()
-                logger.info("Banco de dados inicializado com usuário, categorias e contas padrão.")
-            else:
-                logger.info("Banco de dados já inicializado anteriormente.")
-    except Exception as e:
-        logger.error(f"Erro ao inicializar o banco de dados: {str(e)}")
-        # Não relançar o erro aqui para permitir que a aplicação continue tentando
-
-# Execução principal
 if __name__ == '__main__':
-    # Tentar configurar o banco de dados na inicialização
-    # setup_database() # Comentado para evitar bloqueio se o DB não estiver pronto
-    app.run(host='0.0.0.0', port=5000, debug=False) # Debug=False é mais seguro
-
+    app.run(host='0.0.0.0', port=5000, debug=False)

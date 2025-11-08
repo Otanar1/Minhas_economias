@@ -32,9 +32,9 @@ wait_for_db
 
 # 2. Executar o script de inicialização do banco de dados
 # Este script cria as tabelas e os dados iniciais se necessário.
-echo "Executando o script de inicialização do banco de dados (init_db.py)..."
-python init_db.py
-echo "Script de inicialização concluído."
+echo "Aplicando migrações do banco de dados..."
+flask db upgrade
+echo "Migrações concluídas."
 
 # 3. Iniciar a aplicação Flask com Gunicorn
 # 'exec' substitui o processo do shell pelo Gunicorn,
