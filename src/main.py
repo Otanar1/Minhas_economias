@@ -218,6 +218,10 @@ from src.routes.accounts import accounts_bp
 from src.routes.settings import settings_bp
 from src.routes.categories import categories_bp
 from src.commands import register_commands
+
+# Register the format_currency filter
+app.jinja_env.filters['format_currency'] = format_currency
+
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 app.register_blueprint(transactions_bp, url_prefix='/transactions')
@@ -228,6 +232,9 @@ app.register_blueprint(analysis_bp, url_prefix='/analysis')
 app.register_blueprint(accounts_bp, url_prefix='/accounts')
 app.register_blueprint(settings_bp, url_prefix='/settings')
 app.register_blueprint(categories_bp, url_prefix='/categories')
+
+from src.routes.recurring import recurring_bp
+app.register_blueprint(recurring_bp, url_prefix='/recurring')
 
 register_commands(app)
 
