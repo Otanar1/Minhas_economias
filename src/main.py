@@ -236,6 +236,9 @@ app.register_blueprint(categories_bp, url_prefix='/categories')
 from src.routes.recurring import recurring_bp
 app.register_blueprint(recurring_bp, url_prefix='/recurring')
 
+from src.routes.reports import reports_bp
+app.register_blueprint(reports_bp, url_prefix='/reports')
+
 register_commands(app)
 
 @app.route('/')

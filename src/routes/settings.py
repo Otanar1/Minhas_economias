@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, flash
+from flask import Blueprint, render_template, session, redirect, url_for, request, flash, jsonify
 from src.models import User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import json
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -72,7 +73,7 @@ def change_password():
         return redirect(url_for('auth.login'))
     
     user = User.query.filter_by(id=session['user_id']).first_or_404()
-    
+
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
@@ -80,11 +81,11 @@ def change_password():
     if not current_password or not new_password or not confirm_password:
         flash('Todos os campos são obrigatórios.', 'error')
         return redirect(url_for('settings.index'))
-    
+
     if not check_password_hash(user.password, current_password):
         flash('Senha atual incorreta.', 'error')
         return redirect(url_for('settings.index'))
-    
+
     if new_password != confirm_password:
         flash('As senhas não coincidem.', 'error')
         return redirect(url_for('settings.index'))
@@ -94,3 +95,34 @@ def change_password():
     
     flash('Senha atualizada com sucesso!', 'success')
     return redirect(url_for('settings.index'))
+
+@settings_bp.route('/backup')
+def backup():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(session['user_id'])
+
+    backup_data = {
+        'user': {
+            'name': user.name,
+            'email': user.email,
+            'birth_year': user.birth_year,
+            'gender': user.gender,
+            'marital_status': user.marital_status,
+            'children_count': user.children_count,
+            'country': user.country,
+            'state': user.state,
+            'city': user.city,
+            'preferences': user.preferences
+        },
+        'accounts': [{'name': a.name, 'type': a.type, 'balance': a.balance} for a in user.accounts],
+        'transactions': [{'description': t.description, 'amount': t.amount, 'type': t.type, 'date': t.date.isoformat()} for t in user.transactions],
+        'budgets': [{'name': b.name, 'amount': b.amount, 'month': b.month, 'year': b.year} for b in user.budgets],
+        'dreams': [{'name': d.name, 'target_amount': d.target_amount, 'current_amount': d.current_amount} for d in user.dreams],
+        'categories': [{'name': c.name, 'type': c.type} for c in user.categories]
+    }
+
+    response = jsonify(backup_data)
+    response.headers['Content-Disposition'] = 'attachment;filename=backup.json'
+    return response

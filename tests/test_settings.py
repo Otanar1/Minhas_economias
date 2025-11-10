@@ -104,3 +104,18 @@ def test_change_email(client):
     # Verify the email was changed
     updated_user = User.query.get(user.id)
     assert updated_user.email == 'new@example.com'
+
+def test_backup(client):
+    # Create a user and log in
+    user = User(name='Test User', email='test@example.com')
+    user.set_password('password')
+    db.session.add(user)
+    db.session.commit()
+
+    with client.session_transaction() as session:
+        session['user_id'] = user.id
+
+    # Test backup
+    response = client.get('/settings/backup')
+    assert response.status_code == 200
+    assert 'application/json' in response.content_type
