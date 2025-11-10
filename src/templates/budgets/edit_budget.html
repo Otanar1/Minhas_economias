@@ -1,41 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Orçamento</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Editar Orçamento</h1>
+{% extends "base.html" %}
 
-        <form method="POST" action="{{ url_for('budgets.edit_budget', budget_id=budget.id) }}">
-            <div class="form-group">
-                <label for="category_id">Categoria</label>
-                <select name="category_id" id="category_id" required>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if budget.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="amount">Valor Orçado</label>
-                <input type="number" name="amount" id="amount" step="0.01" min="0.01" value="{{ budget.amount }}" required>
-            </div>
-            <div class="form-group">
-                <label for="month">Mês</label>
-                <input type="number" name="month" id="month" min="1" max="12" value="{{ budget.month }}" required>
-            </div>
-            <div class="form-group">
-                <label for="year">Ano</label>
-                <input type="number" name="year" id="year" min="2020" value="{{ budget.year }}" required>
-            </div>
-            <div class="form-group">
-                <button type="submit">Salvar Alterações</button>
-            </div>
-        </form>
-        <a href="{{ url_for('budgets.list_budgets') }}">Cancelar</a>
-    </div>
-</body>
-</html>
+{% block title %}Editar Orçamento{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Editar Orçamento</h1>
+
+    <form method="POST" action="{{ url_for('budgets.edit_budget', budget_id=budget.id) }}">
+        <div class="form-group">
+            <label for="name">Nome</label>
+            <input type="text" name="name" id="name" class="form-control" value="{{ budget.name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="category_id">Categoria</label>
+            <select name="category_id" id="category_id" class="form-control" required>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {{ 'selected' if budget.category_id == category.id }}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="amount">Valor</label>
+            <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01" value="{{ budget.amount }}" required>
+        </div>
+        <div class="form-group">
+            <label for="month">Mês</label>
+            <input type="number" name="month" id="month" class="form-control" min="1" max="12" value="{{ budget.month }}" required>
+        </div>
+        <div class="form-group">
+            <label for="year">Ano</label>
+            <input type="number" name="year" id="year" class="form-control" min="2000" value="{{ budget.year }}" required>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,33 +1,23 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Sonho</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Editar Sonho</h1>
+{% extends "base.html" %}
 
-        <form method="POST" action="{{ url_for('dreams.edit_dream', dream_id=dream.id) }}">
-            <div class="form-group">
-                <label for="name">Nome do Sonho</label>
-                <input type="text" name="name" id="name" value="{{ dream.name }}" required>
-            </div>
-            <div class="form-group">
-                <label for="target_amount">Meta de Valor</label>
-                <input type="number" name="target_amount" id="target_amount" step="0.01" min="0.01" value="{{ dream.target_amount }}" required>
-            </div>
-            <div class="form-group">
-                <label for="target_date">Data Alvo (Opcional)</label>
-                <input type="date" name="target_date" id="target_date" value="{{ dream.target_date.strftime('%Y-%m-%d') if dream.target_date }}">
-            </div>
-            <div class="form-group">
-                <button type="submit">Salvar Alterações</button>
-            </div>
-        </form>
-        <a href="{{ url_for('dreams.list_dreams') }}">Cancelar</a>
-    </div>
-</body>
-</html>
+{% block title %}Editar Sonho{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Editar Sonho</h1>
+
+    <form method="POST" action="{{ url_for('dreams.edit_dream', dream_id=dream.id) }}">
+        <div class="form-group">
+            <label for="name">Nome</label>
+            <input type="text" name="name" id="name" class="form-control" value="{{ dream.name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="target_amount">Meta</label>
+            <input type="number" name="target_amount" id="target_amount" class="form-control" step="0.01" min="0.01" value="{{ dream.target_amount }}" required>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

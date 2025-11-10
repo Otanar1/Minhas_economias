@@ -1,48 +1,42 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Orçamentos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Meus Orçamentos</h1>
-        <a href="{{ url_for('budgets.add_budget') }}">Adicionar Novo Orçamento</a>
-        <br><br>
+{% extends "base.html" %}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Categoria</th>
-                    <th>Valor</th>
-                    <th>Mês/Ano</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for budget in budgets %}
-                <tr>
-                    <td>{{ budget.category.name if budget.category else budget.name }}</td>
-                    <td>{{ budget.amount }}</td>
-                    <td>{{ budget.month }}/{{ budget.year }}</td>
-                    <td>
-                        <a href="{{ url_for('budgets.edit_budget', budget_id=budget.id) }}">Editar</a>
-                        <form action="{{ url_for('budgets.delete_budget', budget_id=budget.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este orçamento?');">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="3">Nenhum orçamento encontrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
-        <a href="{{ url_for('dashboard.index') }}">Voltar para o Dashboard</a>
-    </div>
-</body>
-</html>
+{% block title %}Orçamentos{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Meus Orçamentos</h1>
+    <a href="{{ url_for('budgets.add_budget') }}" class="btn btn-primary mb-3">Adicionar Orçamento</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Valor</th>
+                <th>Mês/Ano</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for budget in budgets %}
+            <tr>
+                <td>{{ budget.name }}</td>
+                <td>{{ budget.category.name }}</td>
+                <td>{{ budget.amount | format_currency }}</td>
+                <td>{{ budget.month }}/{{ budget.year }}</td>
+                <td>
+                    <a href="{{ url_for('budgets.edit_budget', budget_id=budget.id) }}" class="btn btn-secondary">Editar</a>
+                    <form action="{{ url_for('budgets.delete_budget', budget_id=budget.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este orçamento?');">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhum orçamento encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

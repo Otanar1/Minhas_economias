@@ -1,89 +1,83 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adicionar Transação</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Adicionar Nova Transação</h1>
+{% extends "base.html" %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
+{% block title %}Adicionar Transação{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Adicionar Nova Transação</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('transactions.add_transaction') }}">
+        <div class="form-group">
+            <label for="type">Tipo de Transação</label>
+            <select name="type" id="type" class="form-control" required>
+                <option value="saída">Saída (Despesa)</option>
+                <option value="entrada">Entrada (Receita)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="description">Descrição</label>
+            <input type="text" name="description" id="description" class="form-control" placeholder="Ex: Compras no supermercado" required>
+        </div>
+        <div class="form-group">
+            <label for="amount">Valor</label>
+            <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+            <label for="date">Data</label>
+            <input type="date" name="date" id="date" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="account_id">Conta</label>
+            <select name="account_id" id="account_id" class="form-control" required>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}" {{ 'selected' if default_account and default_account == account.id }}>{{ account.name }} (Saldo: {{ account.balance | format_currency }})</option>
                 {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('transactions.add_transaction') }}">
-            <div class="form-group">
-                <label for="type">Tipo de Transação</label>
-                <select name="type" id="type" required>
-                    <option value="saída">Saída (Despesa)</option>
-                    <option value="entrada">Entrada (Receita)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Descrição</label>
-                <input type="text" name="description" id="description" placeholder="Ex: Compras no supermercado" required>
-            </div>
-            <div class="form-group">
-                <label for="amount">Valor</label>
-                <input type="number" name="amount" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
-            </div>
-            <div class="form-group">
-                <label for="date">Data</label>
-                <input type="date" name="date" id="date" required>
-            </div>
-            <div class="form-group">
-                <label for="account_id">Conta</label>
-                <select name="account_id" id="account_id" required>
-                    {% for account in accounts %}
-                        <option value="{{ account.id }}" {{ 'selected' if default_account and default_account == account.id }}>{{ account.name }} (Saldo: {{ account.balance }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="category_id">Categoria</label>
-                <select name="category_id" id="category_id" required>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="recurring">Transação Recorrente</label>
-                <input type="checkbox" name="recurring" id="recurring" value="true">
-            </div>
-            <div class="form-group" id="recurrence_frequency_group" style="display: none;">
-                <label for="recurrence_frequency">Frequência da Recorrência</label>
-                <select name="recurrence_frequency" id="recurrence_frequency">
-                    <option value="diaria">Diária</option>
-                    <option value="semanal">Semanal</option>
-                    <option value="mensal">Mensal</option>
-                    <option value="anual">Anual</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <button type="submit">Adicionar Transação</button>
-            </div>
-            <script>
-                document.getElementById('recurring').addEventListener('change', function() {
-                    var frequencyGroup = document.getElementById('recurrence_frequency_group');
-                    if (this.checked) {
-                        frequencyGroup.style.display = 'block';
-                    } else {
-                        frequencyGroup.style.display = 'none';
-                    }
-                });
-            </script>
-        </form>
-        <a href="{{ url_for('dashboard.index') }}">Voltar para o Dashboard</a>
-    </div>
-</body>
-</html>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="category_id">Categoria</label>
+            <select name="category_id" id="category_id" class="form-control" required>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="recurring">Transação Recorrente</label>
+            <input type="checkbox" name="recurring" id="recurring" value="true">
+        </div>
+        <div class="form-group" id="recurrence_frequency_group" style="display: none;">
+            <label for="recurrence_frequency">Frequência da Recorrência</label>
+            <select name="recurrence_frequency" id="recurrence_frequency" class="form-control">
+                <option value="diaria">Diária</option>
+                <option value="semanal">Semanal</option>
+                <option value="mensal">Mensal</option>
+                <option value="anual">Anual</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Adicionar Transação</button>
+        </div>
+        <script>
+            document.getElementById('recurring').addEventListener('change', function() {
+                var frequencyGroup = document.getElementById('recurrence_frequency_group');
+                if (this.checked) {
+                    frequencyGroup.style.display = 'block';
+                } else {
+                    frequencyGroup.style.display = 'none';
+                }
+            });
+        </script>
+    </form>
+</div>
+{% endblock %}

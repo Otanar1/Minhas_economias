@@ -1,53 +1,46 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Sonhos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Meus Sonhos</h1>
-        <a href="{{ url_for('dreams.add_dream') }}">Adicionar Novo Sonho</a>
-        <br><br>
+{% extends "base.html" %}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Meta</th>
-                    <th>Valor Atual</th>
-                    <th>Progresso</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for dream in dreams %}
-                <tr>
-                    <td>{{ dream.name }}</td>
-                    <td>{{ dream.target_amount }}</td>
-                    <td>{{ dream.current_amount }}</td>
-                    <td>
-                        <progress value="{{ dream.current_amount }}" max="{{ dream.target_amount }}"></progress>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('dreams.contribute_to_dream', dream_id=dream.id) }}">Contribuir</a>
-                        <a href="{{ url_for('dreams.edit_dream', dream_id=dream.id) }}">Editar</a>
-                        <form action="{{ url_for('dreams.delete_dream', dream_id=dream.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este sonho?');">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4">Nenhum sonho encontrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
-        <a href="{{ url_for('dashboard.index') }}">Voltar para o Dashboard</a>
-    </div>
-</body>
-</html>
+{% block title %}Meus Sonhos{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Meus Sonhos</h1>
+    <a href="{{ url_for('dreams.add_dream') }}" class="btn btn-primary mb-3">Adicionar Sonho</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Meta</th>
+                <th>Atual</th>
+                <th>Progresso</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dream in dreams %}
+            <tr>
+                <td>{{ dream.name }}</td>
+                <td>{{ dream.target_amount | format_currency }}</td>
+                <td>{{ dream.current_amount | format_currency }}</td>
+                <td>
+                    <progress value="{{ dream.current_amount }}" max="{{ dream.target_amount }}"></progress>
+                    {{ "%.2f"|format((dream.current_amount / dream.target_amount) * 100) }}%
+                </td>
+                <td>
+                    <a href="{{ url_for('dreams.edit_dream', dream_id=dream.id) }}" class="btn btn-secondary">Editar</a>
+                    <a href="{{ url_for('dreams.contribute_to_dream', dream_id=dream.id) }}" class="btn btn-success">Contribuir</a>
+                    <form action="{{ url_for('dreams.delete_dream', dream_id=dream.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este sonho?');">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhum sonho encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

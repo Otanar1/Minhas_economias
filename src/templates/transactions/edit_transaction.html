@@ -1,79 +1,73 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Transação</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Editar Transação</h1>
+{% extends "base.html" %}
 
-        <form method="POST" action="{{ url_for('transactions.edit_transaction', transaction_id=transaction.id) }}">
-            <div class="form-group">
-                <label for="type">Tipo de Transação</label>
-                <select name="type" id="type" required>
-                    <option value="saída" {% if transaction.type == 'saída' %}selected{% endif %}>Saída (Despesa)</option>
-                    <option value="entrada" {% if transaction.type == 'entrada' %}selected{% endif %}>Entrada (Receita)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Descrição</label>
-                <input type="text" name="description" id="description" value="{{ transaction.description }}" required>
-            </div>
-            <div class="form-group">
-                <label for="amount">Valor</label>
-                <input type="number" name="amount" id="amount" step="0.01" min="0.01" value="{{ transaction.amount }}" required>
-            </div>
-            <div class="form-group">
-                <label for="date">Data</label>
-                <input type="date" name="date" id="date" value="{{ transaction.date.strftime('%Y-%m-%d') }}" required>
-            </div>
-            <div class="form-group">
-                <label for="account_id">Conta</label>
-                <select name="account_id" id="account_id" required>
-                    {% for account in accounts %}
-                        <option value="{{ account.id }}" {% if transaction.account_id == account.id %}selected{% endif %}>{{ account.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="category_id">Categoria</label>
-                <select name="category_id" id="category_id" required>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if transaction.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="recurring">Transação Recorrente</label>
-                <input type="checkbox" name="recurring" id="recurring" value="true" {% if transaction.recurring %}checked{% endif %}>
-            </div>
-            <div class="form-group" id="recurrence_frequency_group" {% if not transaction.recurring %}style="display: none;"{% endif %}>
-                <label for="recurrence_frequency">Frequência da Recorrência</label>
-                <select name="recurrence_frequency" id="recurrence_frequency">
-                    <option value="diaria" {% if transaction.recurrence_frequency == 'diaria' %}selected{% endif %}>Diária</option>
-                    <option value="semanal" {% if transaction.recurrence_frequency == 'semanal' %}selected{% endif %}>Semanal</option>
-                    <option value="mensal" {% if transaction.recurrence_frequency == 'mensal' %}selected{% endif %}>Mensal</option>
-                    <option value="anual" {% if transaction.recurrence_frequency == 'anual' %}selected{% endif %}>Anual</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <button type="submit">Salvar Alterações</button>
-            </div>
-            <script>
-                document.getElementById('recurring').addEventListener('change', function() {
-                    var frequencyGroup = document.getElementById('recurrence_frequency_group');
-                    if (this.checked) {
-                        frequencyGroup.style.display = 'block';
-                    } else {
-                        frequencyGroup.style.display = 'none';
-                    }
-                });
-            </script>
-        </form>
-        <a href="{{ url_for('transactions.list_transactions') }}">Cancelar</a>
-    </div>
-</body>
-</html>
+{% block title %}Editar Transação{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Editar Transação</h1>
+
+    <form method="POST" action="{{ url_for('transactions.edit_transaction', transaction_id=transaction.id) }}">
+        <div class="form-group">
+            <label for="type">Tipo de Transação</label>
+            <select name="type" id="type" class="form-control" required>
+                <option value="saída" {{ 'selected' if transaction.type == 'saída' }}>Saída (Despesa)</option>
+                <option value="entrada" {{ 'selected' if transaction.type == 'entrada' }}>Entrada (Receita)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="description">Descrição</label>
+            <input type="text" name="description" id="description" class="form-control" value="{{ transaction.description }}" required>
+        </div>
+        <div class="form-group">
+            <label for="amount">Valor</label>
+            <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01" value="{{ transaction.amount }}" required>
+        </div>
+        <div class="form-group">
+            <label for="date">Data</label>
+            <input type="date" name="date" id="date" class="form-control" value="{{ transaction.date.strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="account_id">Conta</label>
+            <select name="account_id" id="account_id" class="form-control" required>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}" {{ 'selected' if transaction.account_id == account.id }}>{{ account.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="category_id">Categoria</label>
+            <select name="category_id" id="category_id" class="form-control" required>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {{ 'selected' if transaction.category_id == category.id }}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="recurring">Transação Recorrente</label>
+            <input type="checkbox" name="recurring" id="recurring" value="true" {{ 'checked' if transaction.recurring }}>
+        </div>
+        <div class="form-group" id="recurrence_frequency_group" style="display: {{ 'block' if transaction.recurring else 'none' }};">
+            <label for="recurrence_frequency">Frequência da Recorrência</label>
+            <select name="recurrence_frequency" id="recurrence_frequency" class="form-control">
+                <option value="diaria" {{ 'selected' if transaction.recurrence_frequency == 'diaria' }}>Diária</option>
+                <option value="semanal" {{ 'selected' if transaction.recurrence_frequency == 'semanal' }}>Semanal</option>
+                <option value="mensal" {{ 'selected' if transaction.recurrence_frequency == 'mensal' }}>Mensal</option>
+                <option value="anual" {{ 'selected' if transaction.recurrence_frequency == 'anual' }}>Anual</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+        <script>
+            document.getElementById('recurring').addEventListener('change', function() {
+                var frequencyGroup = document.getElementById('recurrence_frequency_group');
+                if (this.checked) {
+                    frequencyGroup.style.display = 'block';
+                } else {
+                    frequencyGroup.style.display = 'none';
+                }
+            });
+        </script>
+    </form>
+</div>
+{% endblock %}

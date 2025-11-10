@@ -1,44 +1,40 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Financeira</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Análise Financeira</h1>
+{% extends "base.html" %}
 
-        <div class="chart-container" style="position: relative; height:40vh; width:80vw">
-            <canvas id="balanceEvolutionChart"></canvas>
-        </div>
+{% block title %}Análise Financeira{% endblock %}
 
-        <a href="{{ url_for('dashboard.index') }}">Voltar para o Dashboard</a>
+{% block content %}
+<div class="main-content">
+    <h1>Análise Financeira</h1>
+    <p>Veja a evolução do seu saldo ao longo do tempo.</p>
+
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+        <canvas id="balanceEvolutionChart"></canvas>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api/balance_evolution')
-                .then(response => response.json())
-                .then(data => {
-                    const ctx = document.getElementById('balanceEvolutionChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: 'Evolução do Saldo',
-                                data: data.data,
-                                fill: false,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
-                            }]
-                        }
-                    });
-                })
-                .catch(error => console.error('Erro ao buscar dados para o gráfico de evolução do saldo:', error));
-        });
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/balance_evolution')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('balanceEvolutionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Evolução do Saldo',
+                            data: data.data,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }]
+                    }
+                });
+            });
+    });
+</script>
+{% endblock %}

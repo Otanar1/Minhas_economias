@@ -1,56 +1,50 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Contas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Gerenciar Contas</h1>
+{% extends "base.html" %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
+{% block title %}Gerenciar Contas{% endblock %}
 
-        <a href="{{ url_for('accounts.add_account') }}" class="btn">Adicionar Nova Conta</a>
+{% block content %}
+<div class="main-content">
+    <h1>Gerenciar Contas</h1>
 
-        <table class="transaction-table" style="margin-top: 20px;">
-            <thead>
-                <tr>
-                    <th>Nome da Conta</th>
-                    <th>Tipo</th>
-                    <th>Saldo</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in accounts %}
-                <tr>
-                    <td>{{ account.name }}</td>
-                    <td>{{ account.type }}</td>
-                    <td>{{ account.balance }}</td>
-                    <td>{% if account.active %}Ativa{% else %}Inativa{% endif %}</td>
-                    <td>
-                        <a href="{{ url_for('accounts.edit_account', account_id=account.id) }}">Editar</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5">Nenhuma conta encontrada.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <a href="{{ url_for('dashboard.index') }}" style="margin-top: 20px; display: inline-block;">Voltar para o Dashboard</a>
-    </div>
-</body>
-</html>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('accounts.add_account') }}" class="btn btn-primary mb-3">Adicionar Nova Conta</a>
+
+    <table class="table" style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Nome da Conta</th>
+                <th>Tipo</th>
+                <th>Saldo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+                <td>{{ account.name }}</td>
+                <td>{{ account.type }}</td>
+                <td>{{ account.balance | format_currency }}</td>
+                <td>{% if account.active %}Ativa{% else %}Inativa{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('accounts.edit_account', account_id=account.id) }}" class="btn btn-secondary">Editar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhuma conta encontrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
