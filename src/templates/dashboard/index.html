@@ -52,12 +52,12 @@
     <div class="transactions-section">
         <div class="section-title">
             <div class="date-selector">
-                <select>
-                    <option>Maio/2025</option>
+                <select id="month-selector" class="form-control">
+                    <!-- Options will be populated by JavaScript -->
                 </select>
                 <div class="date-nav">
-                    <button>&lt;</button>
-                    <button>&gt;</button>
+                    <button id="prev-month">&lt;</button>
+                    <button id="next-month">&gt;</button>
                 </div>
             </div>
             <a href="{{ url_for('transactions.add_transaction') }}" class="add-transaction">
@@ -69,18 +69,18 @@
         <div style="margin-top: 15px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <div>Saldo anterior</div>
-                <div>R$ 0,00</div>
+                <div id="opening-balance">R$ 0,00</div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <div>Entradas</div>
-                <div>R$ 0,00</div>
+                <div id="monthly-income">R$ 0,00</div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <div>Saídas</div>
-                <div>R$ 0,00</div>
+                <div id="monthly-expenses">R$ 0,00</div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; font-size: 18px;">
-                <div>{{ total_balance_formatted }}</div>
+                <div id="closing-balance">{{ total_balance_formatted }}</div>
             </div>
         </div>
     </div>
@@ -136,24 +136,73 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const monthSelector = document.getElementById('month-selector');
+        const openingBalanceEl = document.getElementById('opening-balance');
+        const monthlyIncomeEl = document.getElementById('monthly-income');
+        const monthlyExpensesEl = document.getElementById('monthly-expenses');
+        const closingBalanceEl = document.getElementById('closing-balance');
+
+        function populateMonthSelector() {
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const option = document.createElement('option');
+                option.value = `${date.getFullYear()}-${date.getMonth() + 1}`;
+                option.textContent = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                monthSelector.appendChild(option);
+            }
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function fetchMonthlySummary(year, month) {
+            fetch(`/api/monthly_summary?year=${year}&month=${month}`)
+                .then(response => response.json())
+                .then(data => {
+                    openingBalanceEl.textContent = formatCurrency(data.opening_balance);
+                    monthlyIncomeEl.textContent = formatCurrency(data.monthly_income);
+                    monthlyExpensesEl.textContent = formatCurrency(data.monthly_expenses);
+                    const closingBalance = data.opening_balance + data.monthly_income - data.monthly_expenses;
+                    closingBalanceEl.textContent = formatCurrency(closingBalance);
+                });
+        }
+
+        monthSelector.addEventListener('change', () => {
+            const [year, month] = monthSelector.value.split('-');
+            fetchMonthlySummary(year, month);
+        });
+
+        document.getElementById('prev-month').addEventListener('click', () => {
+            monthSelector.selectedIndex = Math.min(monthSelector.selectedIndex + 1, monthSelector.options.length - 1);
+            monthSelector.dispatchEvent(new Event('change'));
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            monthSelector.selectedIndex = Math.max(monthSelector.selectedIndex - 1, 0);
+            monthSelector.dispatchEvent(new Event('change'));
+        });
+
+        populateMonthSelector();
+        const [initialYear, initialMonth] = monthSelector.value.split('-');
+        fetchMonthlySummary(initialYear, initialMonth);
+
         fetch('/api/summary')
             .then(response => response.json())
             .then(data => {
-                // Renderizar Barras de Progresso do Orçamento
                 const budgetContainer = document.getElementById('budgetProgress');
                 data.budget_progress.forEach(item => {
-                    const percentage = item.budgeted > 0 ? (item.spent / item.budgeted) * 100 : 0;
                     const progressBar = `
                         <div class="budget-item">
                             <span>${item.category}</span>
                             <progress value="${item.spent}" max="${item.budgeted}"></progress>
-                            <span>R$ ${item.spent.toFixed(2)} / R$ ${item.budgeted.toFixed(2)}</span>
+                            <span>${formatCurrency(item.spent)} / ${formatCurrency(item.budgeted)}</span>
                         </div>
                     `;
                     budgetContainer.innerHTML += progressBar;
                 });
 
-                // Renderizar Gráfico de Pizza de Despesas
                 const ctx = document.getElementById('expenseChart').getContext('2d');
                 new Chart(ctx, {
                     type: 'pie',
@@ -173,8 +222,7 @@
                         }]
                     }
                 });
-            })
-            .catch(error => console.error('Erro ao buscar dados do dashboard:', error));
+            });
     });
 </script>
 {% endblock %}

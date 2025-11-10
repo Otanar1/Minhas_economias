@@ -1,6 +1,6 @@
 import pytest
 from src.main import app, db, User, Account, Category, Transaction, Budget
-from datetime import date
+from datetime import date, timedelta
 import json
 
 def test_summary_unauthenticated(test_client):
@@ -107,3 +107,23 @@ def test_balance_evolution_api(logged_in_client):
         1300.00  # Após t4 e t5 (2000 - 800 - 300 + 500 - 100)
     ]
     assert data['data'] == expected_data
+
+def test_monthly_summary(logged_in_client):
+    client, user_id, account_id, category_id = logged_in_client
+
+    # Add transactions for previous month
+    db.session.add(Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Previous Income', type='entrada', amount=1000, date=date.today() - timedelta(days=45)))
+    db.session.add(Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Previous Expense', type='saída', amount=200, date=date.today() - timedelta(days=40)))
+
+    # Add transactions for current month
+    db.session.add(Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Current Income', type='entrada', amount=500, date=date.today()))
+    db.session.add(Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Current Expense', type='saída', amount=100, date=date.today()))
+    db.session.commit()
+
+    response = client.get(f'/api/monthly_summary?year={date.today().year}&month={date.today().month}')
+    data = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert data['opening_balance'] == 800
+    assert data['monthly_income'] == 500
+    assert data['monthly_expenses'] == 100

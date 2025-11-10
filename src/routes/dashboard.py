@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
-from src.models.user import User, db
-from src.models.account import Account
+from src.models import User, db, Account
 from datetime import datetime
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -12,13 +11,13 @@ def index():
         return redirect(url_for('auth.login'))
     
     # Buscar informações do usuário
-    user = User.query.get(session['user_id'])
+    user = db.session.get(User, session['user_id'])
     if not user:
         session.clear()
         return redirect(url_for('auth.login'))
     
     # Buscar contas do usuário
-    accounts = Account.query.filter_by(user_id=session['user_id'], active=True).all()
+    accounts = db.session.execute(db.select(Account).filter_by(user_id=session['user_id'], active=True)).scalars().all()
     
     # Calcular saldo total
     total_balance = sum(account.balance for account in accounts)
@@ -27,5 +26,4 @@ def index():
     return render_template('dashboard/index.html', 
                           user=user, 
                           accounts=accounts, 
-                          total_balance=total_balance,
-                          current_month="Maio/2025")
+                          total_balance=total_balance)

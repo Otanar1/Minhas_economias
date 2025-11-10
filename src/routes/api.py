@@ -200,3 +200,58 @@ def balance_evolution():
             data[-1] = round(current_balance, 2)
 
     return jsonify({'labels': labels, 'data': data})
+
+@api_bp.route('/monthly_summary')
+def monthly_summary():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Acesso não autorizado'}), 401
+
+    user_id = session['user_id']
+    try:
+        year = int(request.args.get('year', datetime.datetime.now().year))
+        month = int(request.args.get('month', datetime.datetime.now().month))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Parâmetros de mês ou ano inválidos.'}), 400
+
+    start_of_month = datetime.date(year, month, 1)
+    # Correção para o cálculo do fim do mês
+    if month == 12:
+        end_of_month = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+    else:
+        end_of_month = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+
+
+    # 1. Calcular Saldo Inicial (Saldo até o final do mês anterior)
+    previous_income = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == 'entrada',
+        Transaction.date < start_of_month
+    ).scalar() or 0.0
+
+    previous_expenses = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == 'saída',
+        Transaction.date < start_of_month
+    ).scalar() or 0.0
+
+    opening_balance = previous_income - previous_expenses
+
+    # 2. Calcular Entradas do Mês
+    monthly_income = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == 'entrada',
+        Transaction.date.between(start_of_month, end_of_month)
+    ).scalar() or 0.0
+
+    # 3. Calcular Saídas do Mês
+    monthly_expenses = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.user_id == user_id,
+        Transaction.type == 'saída',
+        Transaction.date.between(start_of_month, end_of_month)
+    ).scalar() or 0.0
+
+    return jsonify({
+        'opening_balance': opening_balance,
+        'monthly_income': monthly_income,
+        'monthly_expenses': monthly_expenses
+    })
