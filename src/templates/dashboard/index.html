@@ -8,117 +8,44 @@
 <aside class="sidebar">
     <div class="section-title">
         Contas
-        <span>
-            <button class="btn btn-secondary" title="Expandir/Colapsar">+/-</button>
-        </span>
     </div>
     <ul class="account-list">
-        {% if accounts_formatted %}
-            {% for account in accounts_formatted %}
-                <li class="account-item">
-                    <div class="account-name">
-                        <input type="checkbox" class="account-checkbox" checked>
-                        <span>{{ account.name }}</span>
-                    </div>
-                    <div class="account-balance">{{ account.balance_formatted }}</div>
-                </li>
-            {% endfor %}
+        {% for account in accounts %}
+            <li class="account-item">
+                <div class="account-name">{{ account.name }}</div>
+                <div class="account-balance">{{ account.balance | format_currency }}</div>
+            </li>
         {% else %}
             <li>Nenhuma conta encontrada.</li>
-        {% endif %}
+        {% endfor %}
     </ul>
     <div class="total-balance">
         <div class="total-label">Saldo atual</div>
-        <div class="total-value">{{ total_balance_formatted }}</div>
+        <div class="total-value">{{ total_balance | format_currency }}</div>
     </div>
     <div class="action-buttons">
-        <button class="btn btn-secondary">Limpar</button>
         <a href="{{ url_for('accounts.add_account') }}" class="btn btn-primary">Nova conta</a>
-    </div>
-
-    <div class="section-title" style="margin-top: 20px;">
-        Convites
-        <span>
-            <button class="btn btn-secondary" title="Expandir/Colapsar">+/-</button>
-        </span>
-    </div>
-    <div>
-        <input type="text" placeholder="Convide um amigo" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-        <button class="btn btn-primary" style="width: 100%;">Enviar convite</button>
     </div>
 </aside>
 
 <div class="main-content">
     <div class="transactions-section">
         <div class="section-title">
-            <div class="date-selector">
-                <select id="month-selector" class="form-control">
-                    <!-- Options will be populated by JavaScript -->
-                </select>
-                <div class="date-nav">
-                    <button id="prev-month">&lt;</button>
-                    <button id="next-month">&gt;</button>
-                </div>
-            </div>
+            <span>Entradas e Saídas do Mês</span>
             <a href="{{ url_for('transactions.add_transaction') }}" class="add-transaction">
                 <span>+</span> Adicionar transação
             </a>
         </div>
-
-        <h3>Entradas e saídas</h3>
-        <div style="margin-top: 15px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <div>Saldo anterior</div>
-                <div id="opening-balance">R$ 0,00</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <div>Entradas</div>
-                <div id="monthly-income">R$ 0,00</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <div>Saídas</div>
-                <div id="monthly-expenses">R$ 0,00</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; font-size: 18px;">
-                <div id="closing-balance">{{ total_balance_formatted }}</div>
-            </div>
-        </div>
+        <!-- Simplified summary -->
     </div>
 
     <div class="transactions-section">
         <div class="section-title">
-            Anteriores não consolidadas
+            Transações Recentes
         </div>
-        {% if recent_transactions_formatted %}
-            <table class="transaction-table">
-                <thead>
-                    <tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>
-                </thead>
-                <tbody>
-                {% for tx in recent_transactions_formatted %}
-                    <tr>
-                        <td>{{ tx.date_formatted }}</td>
-                        <td>{{ tx.description }}</td>
-                        <td>{{ tx.category_name }}</td>
-                        <td>{{ tx.amount_formatted }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="no-transactions">
-                Nenhuma transação encontrada
-            </div>
-        {% endif %}
-    </div>
-
-    <div class="transactions-section">
-        <div class="section-title">
-            Progresso do Orçamento (Mês Atual)
-        </div>
-        <div id="budgetProgress">
-            <!-- As barras de progresso serão inseridas aqui pelo JavaScript -->
-        </div>
+        <table class="transaction-table">
+            <!-- Recent transactions will be loaded here -->
+        </table>
     </div>
 
     <div class="transactions-section">

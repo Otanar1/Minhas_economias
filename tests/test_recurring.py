@@ -1,55 +1,30 @@
 import pytest
-from src.main import app, db
-from src.models import User, Transaction, Account, Category
-import datetime
+from src.models import Transaction
+from datetime import date
 
-@pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SECRET_KEY'] = 'test_secret_key'
+def test_recurring_transaction_management(client, db, logged_in_client):
+    """
+    Testa a criação, listagem e exclusão de transações recorrentes.
+    """
+    _, user_id, account_id, category_id = logged_in_client
 
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-            yield client
-            db.session.remove()
-            db.drop_all()
-
-def test_recurring_transaction_management(client):
-    # Create a user and log in
-    user = User(name='Test User', email='test@example.com')
-    user.set_password('password')
-    account = Account(name='Test Account', type='corrente', balance=1000, user=user)
-    category = Category(name='Test Category', type='saída', user=user)
-    db.session.add_all([user, account, category])
-    db.session.commit()
-
-    with client.session_transaction() as session:
-        session['user_id'] = user.id
-
-    # Add a recurring transaction
+    # Adicionar transação recorrente
     recurring_transaction = Transaction(
-        description='Recurring Test',
-        amount=100,
-        type='saída',
-        date=datetime.date.today(),
-        recurring=True,
-        recurrence_frequency='mensal',
-        account=account,
-        category=category,
-        user=user
+        description='Recurring Test', amount=100, type='saída', date=date.today(),
+        recurring=True, recurrence_frequency='mensal',
+        account_id=account_id, category_id=category_id, user_id=user_id
     )
     db.session.add(recurring_transaction)
     db.session.commit()
 
-    # List recurring transactions
+    # Listar transações recorrentes
     response = client.get('/recurring/')
+    assert response.status_code == 200
     assert b'Recurring Test' in response.data
 
-    # Delete the recurring transaction
-    client.post(f'/recurring/delete/{recurring_transaction.id}', follow_redirects=True)
+    # Excluir transação recorrente
+    response = client.post(f'/recurring/delete/{recurring_transaction.id}')
+    assert response.status_code == 302
 
-    # Verify the recurring transaction was deleted
-    deleted_transaction = Transaction.query.get(recurring_transaction.id)
-    assert deleted_transaction is None
+    # Verificar se a transação foi excluída do banco de dados
+    assert Transaction.query.get(recurring_transaction.id) is None

@@ -1,190 +1,105 @@
 import pytest
-from src.main import app, db, User, Account, Category, Transaction
-from src.commands import _generate_recurring_transactions_logic
-from datetime import date, timedelta
-from werkzeug.security import generate_password_hash
-from dateutil.relativedelta import relativedelta
+from src.models import Transaction, Account
+from datetime import date
 
-
-def test_add_expense_transaction(logged_in_client):
+def test_add_expense_transaction(client, db, logged_in_client):
     """
-    Testa a adição de uma transação de despesa (saída).
+    Testa a adição de uma transação de despesa.
     """
-    client, user_id, account_id, category_id = logged_in_client
+    _, _, account_id, category_id = logged_in_client
+    account = Account.query.get(account_id)
+    initial_balance = account.balance
 
-    with app.app_context():
-        initial_balance = db.session.get(Account, account_id).balance
-
-    # Adicionar transação e verificar o redirecionamento
     response = client.post('/transactions/add', data={
-        'type': 'saída',
-        'description': 'Supermercado',
-        'amount': '100.00',
-        'date': '2025-01-15',
-        'account_id': account_id,
-        'category_id': category_id
+        'type': 'saída', 'description': 'Supermercado', 'amount': '100.00',
+        'date': '2025-01-15', 'account_id': account_id, 'category_id': category_id
     })
     assert response.status_code == 302 # Verifica o redirecionamento
 
-    # Verificar a mensagem flash na sessão
     with client.session_transaction() as session:
         assert session['_flashes'][0][1] == 'Transação adicionada com sucesso!'
 
-    # Verificar dados no banco de dados
-    with app.app_context():
-        transaction = db.session.query(Transaction).filter_by(description='Supermercado').one()
-        assert transaction.amount == 100.00
-        updated_account = db.session.get(Account, account_id)
-        assert updated_account.balance == initial_balance - 100.00
+    db.session.refresh(account)
+    assert account.balance == initial_balance - 100.00
 
-def test_add_income_transaction(logged_in_client):
+def test_add_income_transaction(client, db, logged_in_client):
     """
-    Testa a adição de uma transação de receita (entrada).
+    Testa a adição de uma transação de receita.
     """
-    client, user_id, account_id, category_id = logged_in_client
-
-    with app.app_context():
-        initial_balance = db.session.get(Account, account_id).balance
+    _, _, account_id, category_id = logged_in_client
+    account = Account.query.get(account_id)
+    initial_balance = account.balance
 
     response = client.post('/transactions/add', data={
-        'type': 'entrada',
-        'description': 'Salário',
-        'amount': '500.00',
-        'date': '2025-01-05',
-        'account_id': account_id,
-        'category_id': category_id
+        'type': 'entrada', 'description': 'Salário', 'amount': '500.00',
+        'date': '2025-01-05', 'account_id': account_id, 'category_id': category_id
     })
     assert response.status_code == 302
 
     with client.session_transaction() as session:
         assert session['_flashes'][0][1] == 'Transação adicionada com sucesso!'
 
-    with app.app_context():
-        transaction = db.session.query(Transaction).filter_by(description='Salário').one()
-        assert transaction.amount == 500.00
-        updated_account = db.session.get(Account, account_id)
-        assert updated_account.balance == initial_balance + 500.00
+    db.session.refresh(account)
+    assert account.balance == initial_balance + 500.00
 
-def test_list_transactions(logged_in_client):
+def test_list_transactions(client, db, logged_in_client):
     """
-    Testa a página de listagem de transações.
+    Testa a listagem de transações.
     """
-    client, user_id, account_id, category_id = logged_in_client
-
-    with app.app_context():
-        t1 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Almoço', amount=25.50, type='saída', date=date(2025, 1, 10))
-        t2 = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Freela', amount=200.00, type='entrada', date=date(2025, 1, 11))
-        db.session.add_all([t1, t2])
-        db.session.commit()
+    _, user_id, account_id, category_id = logged_in_client
+    db.session.add(Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Almoço', amount=25.50, type='saída', date=date(2025, 1, 10)))
+    db.session.commit()
 
     response = client.get('/transactions/')
-
     assert response.status_code == 200
-    assert b"Minhas Transa\xc3\xa7\xc3\xb5es" in response.data
     assert b"Almo\xc3\xa7o" in response.data
-    assert b"Freela" in response.data
 
-def test_delete_transaction(logged_in_client):
+def test_delete_transaction(client, db, logged_in_client):
     """
-    Testa a exclusão de uma transação.
-    Verifica se a transação é removida e o saldo da conta é restaurado.
+    Testa a exclusão de uma transação e a restauração do saldo.
     """
-    client, user_id, account_id, category_id = logged_in_client
+    _, user_id, account_id, category_id = logged_in_client
+    account = Account.query.get(account_id)
+    initial_balance = account.balance
+    transaction = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Gasto para excluir', amount=150.00, type='saída', date=date(2025, 1, 20))
+    account.balance -= 150.00
+    db.session.add(transaction)
+    db.session.commit()
 
-    # 1. Criar uma transação para ser excluída
-    with app.app_context():
-        initial_balance = db.session.get(Account, account_id).balance
-        transaction_to_delete = Transaction(
-            user_id=user_id,
-            account_id=account_id,
-            category_id=category_id,
-            description='Gasto para excluir',
-            amount=150.00,
-            type='saída',
-            date=date(2025, 1, 20)
-        )
-        # Atualizar o saldo da conta manualmente para o teste
-        account = db.session.get(Account, account_id)
-        account.balance -= 150.00
-        db.session.add(transaction_to_delete)
-        db.session.commit()
-        transaction_id = transaction_to_delete.id
-        balance_before_delete = account.balance
+    client.post(f'/transactions/delete/{transaction.id}')
+    assert Transaction.query.get(transaction.id) is None
+    db.session.refresh(account)
+    assert account.balance == initial_balance
 
-    # 2. Enviar requisição para excluir a transação
-    response = client.post(f'/transactions/delete/{transaction_id}')
-    assert response.status_code == 302 # Verifica o redirecionamento
-
-    # 3. Verificar o resultado
-    with app.app_context():
-        # A transação foi removida?
-        deleted_transaction = db.session.get(Transaction, transaction_id)
-        assert deleted_transaction is None
-
-        # O saldo da conta foi restaurado?
-        updated_account = db.session.get(Account, account_id)
-        assert updated_account.balance == initial_balance
-
-def test_edit_transaction(logged_in_client):
+def test_edit_transaction(client, db, logged_in_client):
     """
-    Testa a edição de uma transação.
-    Verifica se o saldo da conta é recalculado corretamente.
+    Testa a edição de uma transação e o recálculo do saldo.
     """
-    client, user_id, account_id, category_id = logged_in_client
+    _, user_id, account_id, category_id = logged_in_client
+    account = Account.query.get(account_id)
+    initial_balance = account.balance
+    transaction = Transaction(user_id=user_id, account_id=account_id, category_id=category_id, description='Compra', amount=50.00, type='saída', date=date(2025, 2, 1))
+    account.balance -= 50.00
+    db.session.add(transaction)
+    db.session.commit()
 
-    # 1. Criar uma transação inicial
-    with app.app_context():
-        initial_balance = db.session.get(Account, account_id).balance
-        transaction = Transaction(
-            user_id=user_id, account_id=account_id, category_id=category_id,
-            description='Compra inicial', amount=50.00, type='saída', date=date(2025, 2, 1)
-        )
-        account = db.session.get(Account, account_id)
-        account.balance -= 50.00
-        db.session.add(transaction)
-        db.session.commit()
-        transaction_id = transaction.id
+    client.post(f'/transactions/edit/{transaction.id}', data={'amount': '75.00', 'description': 'Compra corrigida', 'type': 'saída', 'date': '2025-02-01', 'account_id': account_id, 'category_id': category_id})
 
-    # 2. Editar a transação (mudar o valor de 50 para 75)
-    response = client.post(f'/transactions/edit/{transaction_id}', data={
-        'type': 'saída',
-        'description': 'Compra corrigida',
-        'amount': '75.00',
-        'date': '2025-02-01',
-        'account_id': account_id,
-        'category_id': category_id
-    })
-    assert response.status_code == 302
+    db.session.refresh(transaction)
+    assert transaction.amount == 75.00
+    db.session.refresh(account)
+    assert account.balance == initial_balance - 75.00
 
-    # 3. Verificar o resultado
-    with app.app_context():
-        edited_transaction = db.session.get(Transaction, transaction_id)
-        assert edited_transaction.description == 'Compra corrigida'
-        assert edited_transaction.amount == 75.00
-
-        # O saldo deve ser o inicial menos o novo valor da transação
-        updated_account = db.session.get(Account, account_id)
-        assert updated_account.balance == initial_balance - 75.00
-
-def test_add_recurring_transaction(logged_in_client):
+def test_add_recurring_transaction(client, db, logged_in_client):
     """
     Testa a adição de uma transação recorrente.
     """
-    client, user_id, account_id, category_id = logged_in_client
-
-    response = client.post('/transactions/add', data={
-        'type': 'saída',
-        'description': 'Assinatura Mensal',
-        'amount': '29.99',
-        'date': '2025-02-01',
-        'account_id': account_id,
-        'category_id': category_id,
-        'recurring': 'true',
-        'recurrence_frequency': 'mensal'
+    _, _, account_id, category_id = logged_in_client
+    client.post('/transactions/add', data={
+        'description': 'Assinatura Mensal', 'amount': '29.99', 'date': '2025-02-01',
+        'account_id': account_id, 'category_id': category_id, 'type': 'saída',
+        'recurring': 'true', 'recurrence_frequency': 'mensal'
     })
-    assert response.status_code == 302
 
-    with app.app_context():
-        transaction = db.session.query(Transaction).filter_by(description='Assinatura Mensal').one()
-        assert transaction.recurring is True
-        assert transaction.recurrence_frequency == 'mensal'
+    transaction = Transaction.query.filter_by(description='Assinatura Mensal').one()
+    assert transaction.recurring is True

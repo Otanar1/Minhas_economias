@@ -41,123 +41,6 @@ if not app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
 db.init_app(app)
 migrate = Migrate(app, db)
 
-auth_bp = Blueprint('auth', __name__)
-
-@auth_bp.route('/login', methods=['GET', 'POST'])
-def login():
-    try:
-        if request.method == 'POST':
-            email = request.form.get('email')
-            password = request.form.get('password')
-            
-            logger.info(f"Tentativa de login para o email: {email}")
-            
-            user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
-            
-            if user and check_password_hash(user.password, password):
-                session['user_id'] = user.id
-                session['email'] = user.email
-                logger.info(f"Login bem-sucedido para o usuário: {user.id}")
-                return redirect(url_for('dashboard.index'))
-            else:
-                flash('Email ou senha incorretos', 'error')
-                logger.warning(f"Falha no login para o email: {email}")
-        
-        return render_template('auth/login.html')
-    except Exception as e:
-        logger.error(f"Erro no login: {str(e)}")
-        flash('Ocorreu um erro ao processar o login. Por favor, tente novamente.', 'error')
-        return render_template('auth/login.html')
-
-@auth_bp.route('/register', methods=['GET', 'POST'])
-def register():
-    try:
-        if request.method == 'POST':
-            name = request.form.get('name')
-            email = request.form.get('email')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-            
-            if not name or not email or not password:
-                flash('Todos os campos são obrigatórios', 'error')
-                return render_template('auth/register.html')
-            
-            if password != confirm_password:
-                flash('As senhas não coincidem', 'error')
-                return render_template('auth/register.html')
-            
-            existing_user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
-            if existing_user:
-                flash('Este email já está em uso', 'error')
-                return render_template('auth/register.html')
-            
-            new_user = User(
-                name=name,
-                email=email,
-                created_at=datetime.datetime.now(datetime.timezone.utc),
-                updated_at=datetime.datetime.now(datetime.timezone.utc)
-            )
-            new_user.set_password(password)
-            
-            db.session.add(new_user)
-            db.session.commit()
-            
-            categories = [
-                Category(name='Alimentação', type='saída', user_id=new_user.id),
-                Category(name='Transporte', type='saída', user_id=new_user.id),
-                Category(name='Moradia', type='saída', user_id=new_user.id),
-                Category(name='Lazer', type='saída', user_id=new_user.id),
-                Category(name='Saúde', type='saída', user_id=new_user.id),
-                Category(name='Educação', type='saída', user_id=new_user.id),
-                Category(name='Salário', type='entrada', user_id=new_user.id),
-                Category(name='Investimentos', type='entrada', user_id=new_user.id),
-                Category(name='Outros', type='entrada', user_id=new_user.id)
-            ]
-            db.session.bulk_save_objects(categories)
-            
-            accounts = [
-                Account(name='Carteira', type='carteira', balance=0.0, user_id=new_user.id, active=True),
-                Account(name='Conta Corrente', type='conta_corrente', balance=0.0, user_id=new_user.id, active=True),
-                Account(name='Poupança', type='poupanca', balance=0.0, user_id=new_user.id, active=True),
-                Account(name='Cartão de Crédito', type='cartao_credito', balance=0.0, user_id=new_user.id, active=True)
-            ]
-            db.session.bulk_save_objects(accounts)
-            
-            db.session.commit()
-            
-            flash('Cadastro realizado com sucesso! Faça login para continuar.', 'success')
-            return redirect(url_for('auth.login'))
-    except Exception as e:
-        logger.error(f"Erro no registro: {str(e)}")
-        db.session.rollback()
-        flash('Ocorreu um erro ao processar o registro. Por favor, tente novamente.', 'error')
-    
-    return render_template('auth/register.html')
-
-@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
-def forgot_password():
-    try:
-        if request.method == 'POST':
-            email = request.form.get('email')
-            
-            user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
-            
-            if user:
-                flash('Instruções para redefinição de senha foram enviadas para seu email', 'success')
-                return redirect(url_for('auth.login'))
-            else:
-                flash('Email não encontrado', 'error')
-    except Exception as e:
-        logger.error(f"Erro na recuperação de senha: {str(e)}")
-        flash('Ocorreu um erro ao processar a recuperação de senha. Por favor, tente novamente.', 'error')
-    
-    return render_template('auth/forgot_password.html')
-
-@auth_bp.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('auth.login'))
-
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
@@ -217,7 +100,15 @@ from src.routes.analysis import analysis_bp
 from src.routes.accounts import accounts_bp
 from src.routes.settings import settings_bp
 from src.routes.categories import categories_bp
+from src.routes.auth import auth_bp
 from src.commands import register_commands
+
+from flask import g
+
+@app.before_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    g.user = User.query.get(user_id) if user_id is not None else None
 
 # Register the format_currency filter
 app.jinja_env.filters['format_currency'] = format_currency

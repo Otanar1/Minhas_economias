@@ -14,186 +14,225 @@ body {
 }
 .header {
     background-color: #b5d56a;
-    padding: 10px 0;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.logo {
+.logo img {
     max-width: 230px;
-    margin-left: 20px;
 }
-.user-menu {
-    margin-right: 20px;
-}
-.user-menu button {
-    background-color: #8fb83f;
+.user-info {
     color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
 }
-.main-nav {
-    background-color: #363636;
-    display: flex;
+.user-email {
+    margin-right: 15px;
 }
-.nav-item {
+.logout-link {
     color: white;
     text-decoration: none;
-    padding: 15px 20px;
-    border-right: 1px solid #555;
-    cursor: pointer;
 }
-.nav-item.active {
-    background-color: #4a4a4a;
+.logout-link:hover {
+    text-decoration: underline;
 }
-.nav-item:hover {
-    background-color: #4a4a4a;
-}
-.content {
+.main-section {
     flex: 1;
-    padding: 20px;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
 }
-.sidebar {
-    width: 250px;
+.login-box {
     background-color: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 15px;
-    margin-right: 20px;
-    height: fit-content; /* Ajustar altura */
+    width: 100%;
+    max-width: 500px;
+    padding: 30px;
 }
-.main-content {
-    flex: 1;
-    background-color: white;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    padding: 20px;
-}
-.section-title {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #333;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.account-list {
-    list-style: none;
-    margin-bottom: 10px; /* Espaço antes do saldo total */
-}
-.account-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
-.account-name {
-    display: flex;
-    align-items: center;
-}
-.account-checkbox {
-    margin-right: 8px;
-}
-.account-balance {
-    font-weight: bold;
-}
-.total-balance {
-    padding: 10px 0;
-    border-top: 2px solid #ddd;
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-}
-.total-label {
-    font-weight: bold;
-}
-.total-value {
-    font-weight: bold;
-}
-.action-buttons {
-    margin-top: 15px;
-    display: flex;
-    gap: 10px;
-}
-.btn {
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    border: none;
-}
-.btn-primary {
-    background-color: #b5d56a;
-    color: white;
-}
-.btn-secondary {
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px solid #ddd;
-}
-.transactions-section {
+.login-title {
+    font-size: 24px;
     margin-bottom: 20px;
+    color: #333;
 }
-.date-selector {
-    display: flex;
-    align-items: center;
+.form-group {
     margin-bottom: 15px;
 }
-.date-selector select {
-    padding: 8px;
-    border-radius: 4px;
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+.form-control {
+    width: 100%;
+    padding: 10px;
     border: 1px solid #ddd;
-    margin-right: 10px;
+    border-radius: 4px;
+    font-size: 16px;
 }
-.date-nav {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.forgot-password {
+    float: right;
+    color: #b5d56a;
+    text-decoration: none;
+    font-size: 14px;
 }
-.date-nav button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
+.forgot-password:hover {
+    text-decoration: underline;
 }
-.add-transaction {
+.btn-login {
     background-color: #f7a600;
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 12px 20px;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 10px;
+}
+.btn-login:hover {
+    background-color: #e69500;
+}
+.remember-me {
     display: flex;
     align-items: center;
-    gap: 5px;
-}
-.transaction-table {
-    width: 100%;
-    border-collapse: collapse;
     margin-top: 15px;
 }
-.transaction-table th {
-    text-align: left;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-bottom: 2px solid #ddd;
+.remember-me input {
+    margin-right: 5px;
 }
-.transaction-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-.no-transactions {
+.social-login {
+    margin-top: 20px;
     text-align: center;
-    padding: 20px;
-    color: #e74c3c;
+}
+.social-login p {
+    margin-bottom: 10px;
+    color: #666;
+}
+.social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+.social-button {
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+.google-btn {
+    background-color: #4285F4;
+}
+.facebook-btn {
+    background-color: #3b5998;
 }
 .footer {
     background-color: #f5f5f5;
     padding: 15px 0;
     text-align: center;
     border-top: 1px solid #ddd;
-    margin-top: auto; /* Empurra o footer para baixo */
+}
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+.footer-links a {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+}
+.footer-links a:hover {
+    text-decoration: underline;
+}
+.footer-logos {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.footer-logos img {
+    height: 30px;
+}
+.copyright {
+    color: #999;
+    font-size: 12px;
+}
+.flash-messages {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+}
+.flash-message {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+.flash-message.error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+.flash-message.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+/* Dashboard Styles */
+.sidebar {
+    width: 250px;
+    padding: 15px;
+    background: #fff;
+    border-right: 1px solid #ddd;
+}
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.transactions-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    width: 100%;
+}
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.add-transaction {
+    background-color: #f7a600;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.transaction-table th, .transaction-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+.main-section {
+    display: flex;
+    flex-grow: 1;
 }

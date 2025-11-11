@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
+from flask import current_app
 
 db = SQLAlchemy()
 
@@ -34,6 +36,27 @@ class User(db.Model):
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(current_app.config['SECRET_KEY'], salt=b'password-reset-salt')
+        return s.dumps({'user_id': self.id})
+
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'], salt=b'password-reset-salt')
+        try:
+            data = s.loads(token, max_age=1800)
+            user_id = data.get('user_id')
+        except Exception:
+            return None
+        return User.query.get(user_id)
+
+    def update_last_login(self):
+        self.last_login = datetime.datetime.now(datetime.timezone.utc)
+        db.session.commit()
 
 class Account(db.Model):
     __tablename__ = 'accounts'

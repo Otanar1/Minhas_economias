@@ -1,1 +1,49 @@
-{% block content %}{% endblock %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Minhas Economias{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <a href="{{ url_for('dashboard.index') }}">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Minhas Economias">
+                </a>
+            </div>
+            <nav class="navigation">
+                {% if g.user %}
+                    <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+                    <a href="{{ url_for('transactions.list_transactions') }}">Transações</a>
+                    <a href="{{ url_for('budgets.list_budgets') }}">Orçamentos</a>
+                    <a href="{{ url_for('dreams.list_dreams') }}">Sonhos</a>
+                    <a href="{{ url_for('settings.index') }}">Configurações</a>
+                    <a href="{{ url_for('auth.logout') }}">Sair</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.register') }}">Registrar</a>
+                {% endif %}
+            </nav>
+        </header>
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+        <footer>
+            <p>&copy; 2025 Minhas Economias</p>
+        </footer>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

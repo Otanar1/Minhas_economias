@@ -1,58 +1,52 @@
 import pytest
-from src.main import app, db
+from src.main import app as create_app
+from src.models import db as _db
+
+@pytest.fixture(scope='session')
+def app():
+    """Cria uma instância da aplicação Flask para a sessão de testes."""
+    app = create_app
+    app.config.update({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "WTF_CSRF_ENABLED": False,
+        "SECRET_KEY": "test-secret-key-for-sessions"
+    })
+    return app
 
 @pytest.fixture(scope='function')
-def test_client():
-    """
-    Fixture centralizada para configurar a aplicação e o banco de dados para os testes.
-    - Usa 'scope=function' para garantir que esta fixture seja executada para cada função de teste.
-    - Limpa e recria o banco de dados para cada teste, garantindo total isolamento.
-    """
-    # Configuração do app para o modo de teste
-    app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False # Desativa CSRF para simplificar os testes de formulário
+def db(app):
+    """Cria e limpa o banco de dados para cada função de teste."""
+    with app.app_context():
+        _db.create_all()
+        yield _db
+        _db.drop_all()
 
-    with app.test_client() as client:
-        with app.app_context():
-            # Limpa o banco de dados completamente
-            db.drop_all()
-            # Cria todas as tabelas
-            db.create_all()
-
-        # O 'yield' passa o cliente de teste para a função de teste
-        yield client
-
-        # Código de limpeza executado após cada teste
-        with app.app_context():
-            # Garante que a sessão seja limpa
-            db.session.remove()
-            # Limpa o banco de dados novamente
-            db.drop_all()
+@pytest.fixture(scope='function')
+def client(app, db):
+    """Cria um cliente de teste para cada função."""
+    return app.test_client()
 
 @pytest.fixture
-def logged_in_client(test_client):
+def logged_in_client(client, db):
     """
-    Cria e autentica um usuário, retornando o cliente e os IDs dos dados criados.
+    Cria um usuário, hasheia a senha, faz o login e retorna o cliente e os IDs.
     """
-    from src.main import User, Account, Category
-    from werkzeug.security import generate_password_hash
+    from src.models import User, Account, Category
 
-    with app.app_context():
-        user = User(name='Test User', email='test@example.com', password=generate_password_hash('password123'))
-        db.session.add(user)
-        db.session.commit()
+    user = User(name='Test User', email='test@example.com')
+    user.set_password('password123')
+    db.session.add(user)
+    db.session.commit()
 
-        account = Account(name='Test Account', balance=1000.0, user_id=user.id, type='conta_corrente')
-        db.session.add(account)
+    account = Account(name='Test Account', balance=1000.0, user_id=user.id, type='conta_corrente')
+    db.session.add(account)
 
-        category = Category(name='Test Category', type='saída', user_id=user.id)
-        db.session.add(category)
-        db.session.commit()
+    category = Category(name='Test Category', type='saída', user_id=user.id)
+    db.session.add(category)
+    db.session.commit()
 
-        user_id = user.id
-        account_id = account.id
-        category_id = category.id
+    client.post('/auth/login', data={'email': 'test@example.com', 'password': 'password123'})
 
-    test_client.post('/auth/login', data={'email': 'test@example.com', 'password': 'password123'}, follow_redirects=True)
-
-    return test_client, user_id, account_id, category_id
+    # Retorna o ID do usuário, não o objeto
+    return client, user.id, account.id, category.id
