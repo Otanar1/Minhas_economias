@@ -90,16 +90,50 @@ def test_edit_transaction(client, db, logged_in_client):
     db.session.refresh(account)
     assert account.balance == initial_balance - 75.00
 
-def test_add_recurring_transaction(client, db, logged_in_client):
+import io
+
+def test_import_csv_flow(client, db, logged_in_client):
     """
-    Testa a adição de uma transação recorrente.
+    Testa o fluxo completo de importação de CSV.
     """
-    _, _, account_id, category_id = logged_in_client
-    client.post('/transactions/add', data={
-        'description': 'Assinatura Mensal', 'amount': '29.99', 'date': '2025-02-01',
-        'account_id': account_id, 'category_id': category_id, 'type': 'saída',
-        'recurring': 'true', 'recurrence_frequency': 'mensal'
+    _, user_id, account_id, category_id = logged_in_client
+
+    # 1. Simular o upload do CSV
+    csv_data = "Data,Descrição,Valor\n2025-11-11,Compra Online,-50.25\n2025-11-10,Salário,1500.00"
+    data = {'csv_file': (io.BytesIO(csv_data.encode('utf-8')), 'transactions.csv')}
+
+    response = client.post('/transactions/import', data=data, content_type='multipart/form-data')
+    assert response.status_code == 302
+    assert response.location == '/transactions/review'
+
+    # 2. Verificar a página de revisão
+    response = client.get('/transactions/review')
+    assert response.status_code == 200
+    assert b'Compra Online' in response.data
+
+    # 3. Simular a finalização da importação
+    account = Account.query.get(account_id)
+    initial_balance = account.balance
+
+    response = client.post('/transactions/finalize_import', data={
+        'include_0': 'on', 'date_0': '2025-11-11', 'description_0': 'Compra Online', 'amount_0': '-50.25',
+        'account_0': account_id, 'category_0': category_id,
+        'include_1': 'on', 'date_1': '2025-11-10', 'description_1': 'Salário', 'amount_1': '1500.00',
+        'account_1': account_id, 'category_1': category_id
     })
 
-    transaction = Transaction.query.filter_by(description='Assinatura Mensal').one()
-    assert transaction.recurring is True
+    assert response.status_code == 302
+    with client.session_transaction() as session:
+        assert session['_flashes'][0][1] == '2 transações importadas com sucesso!'
+
+    # 4. Verificar o banco de dados
+    t1 = Transaction.query.filter_by(description='Compra Online').first()
+    t2 = Transaction.query.filter_by(description='Salário').first()
+    assert t1 is not None
+    assert t2 is not None
+    assert t1.amount == 50.25
+    assert t2.amount == 1500.00
+
+    db.session.refresh(account)
+    expected_balance = initial_balance - 50.25 + 1500.00
+    assert account.balance == pytest.approx(expected_balance)

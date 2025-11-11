@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Transações de CSV{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Importar Transações de Arquivo CSV</h2>
+    <p>Selecione um arquivo CSV para importar suas transações. O arquivo deve conter as seguintes colunas, nesta ordem:</p>
+    <p><strong>Data, Descrição, Valor</strong></p>
+
+    <div class="alert alert-info">
+        <strong>Formato da Data:</strong> Use o formato AAAA-MM-DD (ex: 2025-11-11).<br>
+        <strong>Formato do Valor:</strong> Use ponto (.) como separador decimal (ex: 150.75 para R$ 150,75). Para despesas, use um sinal de menos (-) na frente do valor (ex: -150.75).
+    </div>
+
+    <form action="{{ url_for('transactions.import_csv') }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="csv_file">Selecione o arquivo CSV</label>
+            <input type="file" class="form-control-file" id="csv_file" name="csv_file" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Enviar Arquivo</button>
+    </form>
+</div>
+{% endblock %}
