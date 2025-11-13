@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Contas{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Gerenciar Contas</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('accounts.add_account') }}" class="btn btn-primary mb-3">Adicionar Nova Conta</a>
+
+    <table class="table" style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Nome da Conta</th>
+                <th>Tipo</th>
+                <th>Saldo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+                <td>{{ account.name }}</td>
+                <td>{{ account.type }}</td>
+                <td>{{ account.balance | format_currency }}</td>
+                <td>{% if account.active %}Ativa{% else %}Inativa{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('accounts.edit_account', account_id=account.id) }}" class="btn btn-secondary">Editar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhuma conta encontrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

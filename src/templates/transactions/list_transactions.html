@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Transações{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Minhas Transações</h1>
+    <a href="{{ url_for('transactions.add_transaction') }}" class="btn btn-primary mb-3">Adicionar Nova Transação</a>
+    <br><br>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+                <th>Conta</th>
+                <th>Categoria</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ transaction.description }}</td>
+                <td>{{ transaction.amount | format_currency }}</td>
+                <td>{{ transaction.type }}</td>
+                <td>{{ transaction.account.name }}</td>
+                <td>{{ transaction.category.name if transaction.category else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('transactions.edit_transaction', transaction_id=transaction.id) }}" class="btn btn-secondary">Editar</a>
+                    <form action="{{ url_for('transactions.delete_transaction', transaction_id=transaction.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta transação?');">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7">Nenhuma transação encontrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

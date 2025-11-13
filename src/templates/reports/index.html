@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios Avançados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <main role="main" class="col-md-12 ml-sm-auto col-lg-12 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Relatórios Avançados</h1>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="start_date">Data de Início</label>
+                        <input type="date" id="start_date" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="end_date">Data de Fim</label>
+                        <input type="date" id="end_date" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="accounts">Contas</label>
+                        <select id="accounts" class="form-control" multiple>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="categories">Categorias</label>
+                        <select id="categories" class="form-control" multiple>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="generate_report" class="btn btn-primary mt-3">Gerar Relatório</button>
+            <button id="export_csv" class="btn btn-secondary mt-3">Exportar para CSV</button>
+
+            <hr>
+
+            <div id="report-results">
+                <!-- Os resultados do relatório serão exibidos aqui -->
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.getElementById('generate_report').addEventListener('click', function() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const accounts = Array.from(document.getElementById('accounts').selectedOptions).map(option => option.value);
+        const categories = Array.from(document.getElementById('categories').selectedOptions).map(option => option.value);
+
+        fetch('/api/reports/summary', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate,
+                accounts: accounts,
+                categories: categories
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultsDiv = document.getElementById('report-results');
+            resultsDiv.innerHTML = `
+                <h2>Resultados</h2>
+                <p><strong>Total de Receitas:</strong> ${data.total_income.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                <p><strong>Total de Despesas:</strong> ${data.total_expenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                <canvas id="reportChart"></canvas>
+            `;
+
+            const ctx = document.getElementById('reportChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.expenses_by_category.map(item => item.category),
+                    datasets: [{
+                        label: 'Despesas por Categoria',
+                        data: data.expenses_by_category.map(item => item.amount),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ]
+                    }]
+                }
+            });
+        });
+    });
+
+    document.getElementById('export_csv').addEventListener('click', function() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const accounts = Array.from(document.getElementById('accounts').selectedOptions).map(option => option.value);
+        const categories = Array.from(document.getElementById('categories').selectedOptions).map(option => option.value);
+
+        fetch('/api/reports/export_csv', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate,
+                accounts: accounts,
+                categories: categories
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'relatorio_transacoes.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Sonho{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1>Editar Sonho</h1>
+
+    <form method="POST" action="{{ url_for('dreams.edit_dream', dream_id=dream.id) }}">
+        <div class="form-group">
+            <label for="name">Nome</label>
+            <input type="text" name="name" id="name" class="form-control" value="{{ dream.name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="target_amount">Meta</label>
+            <input type="number" name="target_amount" id="target_amount" class="form-control" step="0.01" min="0.01" value="{{ dream.target_amount }}" required>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

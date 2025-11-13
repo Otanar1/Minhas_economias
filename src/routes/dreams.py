@@ -1,146 +1,158 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, flash, jsonify
-from src.models.user import User, db
-from src.models.dream import Dream
-from datetime import datetime, date
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from src.main import db, Transaction, Dream, Account
+import datetime
 
-dreams_bp = Blueprint('dreams', __name__)
+dreams_bp = Blueprint('dreams', __name__, template_folder='../templates')
 
 @dreams_bp.route('/')
-def index():
-    # Verificar se o usuário está autenticado
+def list_dreams():
+    if 'user_id' not in session:
+        flash('Por favor, faça login para acessar esta página.', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    user_id = session['user_id']
+    dreams = db.session.execute(db.select(Dream).filter_by(user_id=user_id)).scalars().all()
+    
+    return render_template('dreams/list_dreams.html', dreams=dreams)
+
+@dreams_bp.route('/add', methods=['GET', 'POST'])
+def add_dream():
+    if 'user_id' not in session:
+        flash('Por favor, faça login para acessar esta página.', 'warning')
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            target_amount = float(request.form.get('target_amount'))
+            target_date_str = request.form.get('target_date')
+
+            target_date = None
+            if target_date_str:
+                target_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d').date()
+
+            new_dream = Dream(
+                user_id=session['user_id'],
+                name=name,
+                target_amount=target_amount,
+                target_date=target_date,
+                type="Geral"
+            )
+            db.session.add(new_dream)
+            db.session.commit()
+            flash('Sonho adicionado com sucesso!', 'success')
+            return redirect(url_for('dreams.list_dreams'))
+        except Exception as e:
+            flash(f'Ocorreu um erro ao adicionar o sonho: {e}', 'error')
+            db.session.rollback()
+
+    return render_template('dreams/add_dream.html')
+
+@dreams_bp.route('/edit/<int:dream_id>', methods=['GET', 'POST'])
+def edit_dream(dream_id):
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
-    # Buscar sonhos do usuário
-    dreams = Dream.query.filter_by(user_id=session['user_id']).all()
-    
-    # Calcular progresso total
-    total_target = sum(dream.target_amount for dream in dreams)
-    total_current = sum(dream.current_amount for dream in dreams)
-    total_progress = round((total_current / total_target) * 100, 2) if total_target > 0 else 0
-    
-    return render_template('dreams/index.html', 
-                          dreams=dreams, 
-                          total_target=total_target,
-                          total_current=total_current,
-                          total_progress=total_progress)
+    user_id = session['user_id']
+    dream = db.session.get(Dream, dream_id)
 
-@dreams_bp.route('/create', methods=['GET', 'POST'])
-def create():
+    if not dream or dream.user_id != user_id:
+        flash('Sonho não encontrado.', 'error')
+        return redirect(url_for('dreams.list_dreams'))
+
     if request.method == 'POST':
-        name = request.form.get('name')
-        dream_type = request.form.get('type')
-        target_amount = request.form.get('target_amount')
-        target_date = request.form.get('target_date')
-        current_amount = request.form.get('current_amount', 0)
-        
-        # Validar dados
-        if not name or not dream_type or not target_amount:
-            flash('Nome, tipo e valor alvo são obrigatórios', 'error')
-            return render_template('dreams/create.html')
-        
         try:
-            target_amount = float(target_amount)
-            current_amount = float(current_amount) if current_amount else 0
-            target_date = datetime.strptime(target_date, '%Y-%m-%d').date() if target_date else None
-        except (ValueError, TypeError):
-            flash('Valores inválidos', 'error')
-            return render_template('dreams/create.html')
-        
-        # Criar novo sonho
-        new_dream = Dream(
-            user_id=session['user_id'],
-            name=name,
-            type=dream_type,
-            target_amount=target_amount,
-            current_amount=current_amount,
-            target_date=target_date
-        )
-        
-        db.session.add(new_dream)
-        db.session.commit()
-        
-        flash('Sonho criado com sucesso!', 'success')
-        return redirect(url_for('dreams.index'))
-    
-    return render_template('dreams/create.html')
+            dream.name = request.form.get('name')
+            dream.target_amount = float(request.form.get('target_amount'))
+            target_date_str = request.form.get('target_date')
 
-@dreams_bp.route('/<int:dream_id>/edit', methods=['GET', 'POST'])
-def edit(dream_id):
-    # Buscar sonho
-    dream = Dream.query.filter_by(id=dream_id, user_id=session['user_id']).first_or_404()
-    
-    if request.method == 'POST':
-        name = request.form.get('name')
-        dream_type = request.form.get('type')
-        target_amount = request.form.get('target_amount')
-        target_date = request.form.get('target_date')
-        current_amount = request.form.get('current_amount')
-        status = request.form.get('status')
-        
-        # Validar dados
-        if not name or not dream_type or not target_amount or not current_amount:
-            flash('Todos os campos obrigatórios devem ser preenchidos', 'error')
-            return render_template('dreams/edit.html', dream=dream)
-        
-        try:
-            target_amount = float(target_amount)
-            current_amount = float(current_amount)
-            target_date = datetime.strptime(target_date, '%Y-%m-%d').date() if target_date else None
-        except (ValueError, TypeError):
-            flash('Valores inválidos', 'error')
-            return render_template('dreams/edit.html', dream=dream)
-        
-        # Atualizar sonho
-        dream.name = name
-        dream.type = dream_type
-        dream.target_amount = target_amount
-        dream.current_amount = current_amount
-        dream.target_date = target_date
-        
-        if status:
-            dream.status = status
-        
-        db.session.commit()
-        
-        flash('Sonho atualizado com sucesso!', 'success')
-        return redirect(url_for('dreams.index'))
-    
-    return render_template('dreams/edit.html', dream=dream)
+            if target_date_str:
+                dream.target_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d').date()
+            else:
+                dream.target_date = None
 
-@dreams_bp.route('/<int:dream_id>/delete', methods=['POST'])
-def delete(dream_id):
-    # Buscar sonho
-    dream = Dream.query.filter_by(id=dream_id, user_id=session['user_id']).first_or_404()
-    
-    # Excluir sonho
-    db.session.delete(dream)
-    db.session.commit()
-    
-    flash('Sonho excluído com sucesso!', 'success')
-    return redirect(url_for('dreams.index'))
+            db.session.commit()
+            flash('Sonho atualizado com sucesso!', 'success')
+            return redirect(url_for('dreams.list_dreams'))
+        except Exception as e:
+            flash(f'Ocorreu um erro ao atualizar o sonho: {e}', 'error')
+            db.session.rollback()
 
-@dreams_bp.route('/<int:dream_id>/update_amount', methods=['POST'])
-def update_amount(dream_id):
-    # Buscar sonho
-    dream = Dream.query.filter_by(id=dream_id, user_id=session['user_id']).first_or_404()
-    
-    amount = request.form.get('amount')
-    
+    return render_template('dreams/edit_dream.html', dream=dream)
+
+@dreams_bp.route('/delete/<int:dream_id>', methods=['POST'])
+def delete_dream(dream_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    user_id = session['user_id']
+    dream = db.session.get(Dream, dream_id)
+
+    if not dream or dream.user_id != user_id:
+        flash('Sonho não encontrado.', 'error')
+        return redirect(url_for('dreams.list_dreams'))
+
     try:
-        amount = float(amount)
-    except (ValueError, TypeError):
-        flash('Valor inválido', 'error')
-        return redirect(url_for('dreams.edit', dream_id=dream_id))
-    
-    # Atualizar valor atual
-    dream.current_amount += amount
-    
-    # Verificar se o sonho foi alcançado
-    if dream.current_amount >= dream.target_amount:
-        dream.status = 'concluído'
-    
-    db.session.commit()
-    
-    flash('Valor atualizado com sucesso!', 'success')
-    return redirect(url_for('dreams.index'))
+        # Adicionar lógica para reverter contribuições aqui no futuro
+        db.session.delete(dream)
+        db.session.commit()
+        flash('Sonho excluído com sucesso!', 'success')
+    except Exception as e:
+        flash(f'Ocorreu um erro ao excluir o sonho: {e}', 'error')
+        db.session.rollback()
+
+    return redirect(url_for('dreams.list_dreams'))
+
+@dreams_bp.route('/contribute/<int:dream_id>', methods=['GET', 'POST'])
+def contribute_to_dream(dream_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    user_id = session['user_id']
+    dream = db.session.get(Dream, dream_id)
+
+    if not dream or dream.user_id != user_id:
+        flash('Sonho não encontrado.', 'error')
+        return redirect(url_for('dreams.list_dreams'))
+
+    if request.method == 'POST':
+        try:
+            amount = float(request.form.get('amount'))
+            account_id = int(request.form.get('account_id'))
+
+            account = db.session.get(Account, account_id)
+
+            if not account or account.user_id != user_id:
+                flash('Conta não encontrada.', 'error')
+                return redirect(url_for('dreams.contribute_to_dream', dream_id=dream_id))
+
+            if account.balance < amount:
+                flash('Saldo insuficiente na conta selecionada.', 'error')
+                return redirect(url_for('dreams.contribute_to_dream', dream_id=dream_id))
+
+            # Create a new transaction
+            new_transaction = Transaction(
+                user_id=user_id,
+                account_id=account_id,
+                description=f'Contribuição para o sonho: {dream.name}',
+                amount=amount,
+                date=datetime.datetime.now().date(),
+                type='out'
+            )
+            db.session.add(new_transaction)
+
+            # Update dream and account balances
+            dream.current_amount += amount
+            account.balance -= amount
+
+            db.session.commit()
+            flash('Contribuição realizada com sucesso!', 'success')
+            return redirect(url_for('dreams.list_dreams'))
+        except Exception as e:
+            flash(f'Ocorreu um erro ao realizar a contribuição: {e}', 'error')
+            db.session.rollback()
+            return redirect(url_for('dreams.contribute_to_dream', dream_id=dream_id))
+
+
+    accounts = db.session.execute(db.select(Account).filter_by(user_id=user_id, active=True)).scalars().all()
+    return render_template('dreams/contribute_to_dream.html', dream=dream, accounts=accounts)
